@@ -240,8 +240,12 @@ const CertificateHeroScroll: FC<CertificateHeroScrollProps> = ({ onDownloadClick
         ScrollTrigger.create({
             trigger: spacerRef.current,
             start: "bottom top", // when bottom of spacer hits top of viewport
-            onEnter: () => gsap.to(fixedContainerRef.current, { autoAlpha: 0, duration: 0.5 }),
-            onLeaveBack: () => gsap.to(fixedContainerRef.current, { autoAlpha: 1, duration: 0.5 }),
+            onEnter: () => {
+                if (fixedContainerRef.current) gsap.to(fixedContainerRef.current, { autoAlpha: 0, duration: 0.5 });
+            },
+            onLeaveBack: () => {
+                if (fixedContainerRef.current) gsap.to(fixedContainerRef.current, { autoAlpha: 1, duration: 0.5 });
+            },
             toggleActions: "play none none reverse"
         });
 
@@ -291,7 +295,7 @@ const CertificateHeroScroll: FC<CertificateHeroScrollProps> = ({ onDownloadClick
                         ref={(el) => {
                             imageRefs.current[index] = el;
                         }}
-                        className="absolute overflow-hidden shadow-2xl border border-border/20 bg-card rounded-lg"
+                        className="absolute w-[10px] h-[10px] opacity-0 overflow-hidden shadow-2xl border border-border/20 bg-card rounded-lg"
                         style={{
                             willChange: "transform, opacity", // Optimized will-change
                             zIndex: 1 // Base z-index

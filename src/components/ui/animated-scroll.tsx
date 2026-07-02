@@ -72,7 +72,7 @@ export default function ScrollAdventure() {
         target: containerRef,
         offset: ["start end", "start start"]
     });
-    
+
     // Spring physics wrapper for the entrance to mirror the buttery smooth exit
     const enterProgress = useSpring(enterProgressRaw, { stiffness: 100, damping: 30, restDelta: 0.001 });
 
@@ -82,7 +82,7 @@ export default function ScrollAdventure() {
 
     return (
         <div ref={containerRef} className="relative h-[800vh] w-full pointer-events-none">
-            <motion.div 
+            <motion.div
                 style={{ scale: enterScale, opacity: enterOpacity, borderRadius: enterBorderRadius }}
                 className="sticky top-0 h-screen w-full overflow-hidden bg-background dark:bg-black pointer-events-auto origin-center"
             >
@@ -139,13 +139,13 @@ function PageSlide({ page, isActive, scrollProgress, index }: { page: any, isAct
     const leftY = useTransform(
         scrollProgress,
         [enterStart, enterEnd, exitStart, exitEnd],
-        [leftIsImage ? "-100%" : "100%", "0%", "0%", leftIsImage ? "-100%" : "100%"]
+        [leftIsImage ? "-120%" : "120%", "0%", "0%", leftIsImage ? "-120%" : "120%"]
     );
 
     const rightY = useTransform(
         scrollProgress,
         [enterStart, enterEnd, exitStart, exitEnd],
-        [rightIsImage ? "-100%" : "100%", "0%", "0%", rightIsImage ? "-100%" : "100%"]
+        [rightIsImage ? "-120%" : "120%", "0%", "0%", rightIsImage ? "-120%" : "120%"]
     );
 
     const zIndex = useTransform(
@@ -155,56 +155,54 @@ function PageSlide({ page, isActive, scrollProgress, index }: { page: any, isAct
     );
 
     return (
-        <motion.div style={{ zIndex }} className="absolute inset-0 overflow-hidden bg-background dark:bg-black">
-            <motion.div
-                style={{ y: leftY }}
-                className="absolute top-0 left-0 w-1/2 h-full overflow-visible bg-background dark:bg-black"
-            >
-                <div className="absolute top-0 -right-[2px] w-[2px] h-full bg-background dark:bg-black z-50 pointer-events-none" />
-                <div className="absolute -top-[10vh] left-0 w-full h-[10vh] bg-gradient-to-t from-background dark:from-black to-transparent z-50 pointer-events-none" />
-                <div className="absolute -bottom-[10vh] left-0 w-full h-[10vh] bg-gradient-to-b from-background dark:from-black to-transparent z-50 pointer-events-none" />
+        <motion.div style={{ zIndex }} className="absolute inset-0 flex items-center justify-center pointer-events-none p-4 md:p-8 lg:p-12">
+            {/* Unified Card Container with equal spacing on all sides */}
+            <div className="relative w-full h-full max-w-[1600px] flex pointer-events-auto drop-shadow-2xl">
 
-                <div className="w-full h-full relative overflow-hidden">
-                    {page.leftBgImage ? (
-                        <BlendedVisual src={page.leftBgImage} side="left" />
-                    ) : (
-                        <div className="w-full h-full flex items-center justify-start p-12 md:p-24 lg:p-32 xl:p-40 relative group">
-                            <motion.div
-                                className={cn("absolute inset-0 z-0", page.leftContent?.hoverColor || "bg-primary/5")}
-                                initial={{ height: 0 }}
-                                whileHover={{ height: '100%' }}
-                                transition={{ duration: 0.4 }}
-                            />
-                            {page.leftContent && <EditorialContent content={page.leftContent} index={index} />}
-                        </div>
-                    )}
-                </div>
-            </motion.div>
+                {/* LEFT HALF OF THE SPLIT CARD */}
+                <motion.div
+                    style={{ y: leftY }}
+                    className="relative w-1/2 h-full overflow-hidden bg-background dark:bg-black rounded-l-3xl md:rounded-l-[2rem] border border-r-0 border-border dark:border-white/10 z-10"
+                >
+                    <div className="w-full h-full relative overflow-hidden">
+                        {page.leftBgImage ? (
+                            <BlendedVisual src={page.leftBgImage} side="left" />
+                        ) : (
+                            <div className="w-full h-full flex items-center justify-start p-8 md:p-16 lg:p-24 relative group">
+                                <motion.div
+                                    className={cn("absolute inset-0 z-0", page.leftContent?.hoverColor || "bg-primary/5")}
+                                    initial={{ height: 0 }}
+                                    whileHover={{ height: '100%' }}
+                                    transition={{ duration: 0.4 }}
+                                />
+                                {page.leftContent && <EditorialContent content={page.leftContent} index={index} />}
+                            </div>
+                        )}
+                    </div>
+                </motion.div>
 
-            <motion.div
-                style={{ y: rightY }}
-                className="absolute top-0 left-1/2 w-1/2 h-full overflow-visible bg-background dark:bg-black"
-            >
-                <div className="absolute top-0 -left-[2px] w-[2px] h-full bg-background dark:bg-black z-50 pointer-events-none" />
-                <div className="absolute -top-[10vh] left-0 w-full h-[10vh] bg-gradient-to-t from-background dark:from-black to-transparent z-50 pointer-events-none" />
-                <div className="absolute -bottom-[10vh] left-0 w-full h-[10vh] bg-gradient-to-b from-background dark:from-black to-transparent z-50 pointer-events-none" />
-
-                <div className="w-full h-full relative overflow-hidden">
-                    {page.rightBgImage ? (
-                        <BlendedVisual src={page.rightBgImage} side="right" />
-                    ) : (
-                        <div className="w-full h-full flex items-center justify-start p-12 md:p-24 lg:p-32 xl:p-40 relative group">
-                            <motion.div
-                                className={cn("absolute inset-0 z-0", page.rightContent?.hoverColor || "bg-primary/5")}
-                                initial={{ height: 0 }}
-                                whileHover={{ height: '100%' }}
-                                transition={{ duration: 0.4 }}
-                            />
-                            {page.rightContent && <EditorialContent content={page.rightContent} index={index} />}
-                        </div>
-                    )}
-                </div>
-            </motion.div>
+                {/* RIGHT HALF OF THE SPLIT CARD */}
+                <motion.div
+                    style={{ y: rightY }}
+                    className="relative w-1/2 h-full overflow-hidden bg-background dark:bg-black rounded-r-3xl md:rounded-r-[2rem] border border-l-0 border-border dark:border-white/10 z-10"
+                >
+                    <div className="w-full h-full relative overflow-hidden">
+                        {page.rightBgImage ? (
+                            <BlendedVisual src={page.rightBgImage} side="right" />
+                        ) : (
+                            <div className="w-full h-full flex items-center justify-start p-8 md:p-16 lg:p-24 relative group">
+                                <motion.div
+                                    className={cn("absolute inset-0 z-0", page.rightContent?.hoverColor || "bg-primary/5")}
+                                    initial={{ height: 0 }}
+                                    whileHover={{ height: '100%' }}
+                                    transition={{ duration: 0.4 }}
+                                />
+                                {page.rightContent && <EditorialContent content={page.rightContent} index={index} />}
+                            </div>
+                        )}
+                    </div>
+                </motion.div>
+            </div>
         </motion.div>
     );
 }
@@ -253,7 +251,7 @@ function BlendedVisual({ src, side }: { src: string, side: 'left' | 'right' }) {
                 initial={{ scale: 1, filter: "grayscale(100%)" }}
                 whileHover={{ scale: 1.05, filter: "grayscale(0%)" }}
                 transition={{ duration: 1.2, ease: [0.16, 1, 0.3, 1] }}
-                className="w-full h-full bg-cover bg-center bg-no-repeat will-change-transform"
+                className="absolute -inset-1 bg-cover bg-center bg-no-repeat will-change-transform"
                 style={{ backgroundImage: `url(${src})` }}
             />
             <div className={cn(
@@ -263,8 +261,6 @@ function BlendedVisual({ src, side }: { src: string, side: 'left' | 'right' }) {
                     : "bg-gradient-to-l from-transparent via-transparent to-background dark:to-black",
             )} />
             <div className="absolute inset-0 bg-gradient-to-b from-background via-transparent to-background dark:from-black dark:via-transparent dark:to-black opacity-40 pointer-events-none z-10" />
-            <div className="absolute inset-x-0 top-0 h-48 bg-gradient-to-b from-background dark:from-black to-transparent pointer-events-none z-20" />
-            <div className="absolute inset-x-0 bottom-0 h-48 bg-gradient-to-t from-background dark:from-black to-transparent pointer-events-none z-20" />
         </div>
     );
 }

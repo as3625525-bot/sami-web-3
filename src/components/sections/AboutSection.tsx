@@ -22,6 +22,7 @@ import { cn } from "@/lib/utils";
 import Testimonial1 from "@/components/ui/testimonial-1";
 import { IdentitySequence } from "./IdentitySequence";
 import ScrollAdventure from "@/components/ui/animated-scroll";
+import Bucket from "@/components/ui/bucket";
 import { ArgentLoopInfiniteSlider } from "@/components/ui/argent-loop-infinite-slider";
 import TeamShowcase from "@/components/ui/team-showcase";
 import { CertificateShowcase } from "@/components/ui/certificate-marquee";
@@ -183,7 +184,11 @@ const AboutLeadIn = () => {
     return (
         <div className="w-full max-w-[1650px] mx-auto px-6 py-6 flex justify-center items-center">
             {/* The Reference Card Container (Gambar 1 Style with Dark/Light Support) */}
-            <div className="relative w-full bg-white dark:bg-black border border-red-600/20 dark:border-red-600/40 p-6 md:p-12 lg:p-16 overflow-hidden group shadow-xl dark:shadow-2xl transition-colors duration-500">
+            <motion.div 
+                initial="rest"
+                whileHover="hover"
+                className="relative w-full bg-white dark:bg-black border border-red-600/20 dark:border-red-600/40 p-6 md:p-12 lg:p-16 overflow-hidden shadow-xl dark:shadow-2xl transition-colors duration-500"
+            >
 
                 {/* 1. Grid Background Overlay (Dynamic Colors) */}
                 <div className="absolute inset-0 z-0 bg-[radial-gradient(circle,_#00000008_1px,_transparent_1px)] dark:bg-[radial-gradient(circle,_#ffffff08_1px,_transparent_1px)] bg-[size:20px_20px] pointer-events-none transition-opacity" />
@@ -194,11 +199,23 @@ const AboutLeadIn = () => {
                 <div className="absolute bottom-0 left-0 w-2.5 h-2.5 bg-red-600 -translate-x-1 translate-y-[50%] z-10" />
                 <div className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-red-600 translate-x-1 translate-y-[50%] z-10" />
 
-                {/* 3. Content Layer */}
+                {/* 3. Glare Sweep Effect (Premium Hover Shine via Framer Motion) */}
+                <div className="absolute inset-0 z-30 pointer-events-none overflow-hidden">
+                    <motion.div 
+                        variants={{
+                            rest: { left: "-150%" },
+                            hover: { left: "150%" }
+                        }}
+                        transition={{ duration: 1.5, ease: [0.4, 0, 0.2, 1] }}
+                        className="absolute inset-y-0 w-[150%] md:w-[75%] bg-gradient-to-r from-transparent via-white/80 dark:via-white/30 to-transparent skew-x-[-25deg]"
+                    />
+                </div>
+
+                {/* 4. Content Layer */}
                 <div className="relative z-10">
                     {/* Top Tagline */}
                     <div className="flex justify-between items-start mb-6 md:mb-10">
-                        <span className="text-red-600 dark:text-red-500 text-[10px] md:text-xs font-bold uppercase tracking-[0.3em]">I BELIEVE</span>
+                        <span className="text-red-600 dark:text-red-500 text-[10px] md:text-xs font-bold uppercase tracking-[0.3em]">{t('leadIn.tagline')}</span>
                         <span className="text-zinc-400 dark:text-zinc-600 text-[9px] font-mono tracking-widest uppercase hidden md:block">{t('leadIn.role')}</span>
                     </div>
 
@@ -207,13 +224,14 @@ const AboutLeadIn = () => {
                         initial={{ opacity: 0, y: 20 }}
                         whileInView={{ opacity: 1, y: 0 }}
                         transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] }}
-                        className="mb-8 md:mb-14"
+                        className="mb-8 md:mb-14 relative cursor-default"
                     >
-                        <h2 className="text-[32px] sm:text-[48px] md:text-[64px] lg:text-[76px] xl:text-[88px] font-bold tracking-tight leading-[0.92] text-zinc-900 dark:text-white transition-colors">
-                            <span className="text-zinc-300 dark:text-zinc-700 mr-2">"</span>
-                            {t('leadIn.applied')} <span className="text-zinc-400 dark:text-zinc-500 font-medium">{t('leadIn.intelligence')}</span>. <br className="hidden md:block" />
-                            <span className="text-zinc-900 dark:text-white">because</span> production <span className="font-serif italic font-normal text-zinc-900 dark:text-white lowercase opacity-90">{t('leadIn.engineering')}</span>
-                            <span className="text-zinc-300 dark:text-zinc-700 ml-1">.."</span>
+                        {/* Original Text with glow */}
+                        <h2 className="text-[32px] sm:text-[48px] md:text-[64px] lg:text-[76px] xl:text-[88px] font-bold tracking-tight leading-[0.92] text-zinc-900 dark:text-white transition-all duration-700 group-hover:drop-shadow-[0_0_15px_rgba(0,0,0,0.1)] dark:group-hover:drop-shadow-[0_0_20px_rgba(255,255,255,0.2)]">
+                            <span className="text-zinc-300 dark:text-zinc-700 mr-2 transition-colors duration-700 group-hover:text-zinc-400 dark:group-hover:text-zinc-500">"</span>
+                            {t('leadIn.headlineAI')} <span className="text-zinc-400 dark:text-zinc-500 font-medium transition-colors duration-700 group-hover:text-zinc-600 dark:group-hover:text-zinc-300">{t('leadIn.headlineData')}</span> <br className="hidden md:block" />
+                            <span className="font-serif italic font-normal text-zinc-900 dark:text-white lowercase opacity-90 transition-opacity duration-700 group-hover:opacity-100">{t('leadIn.headlineSoftware')}</span>
+                            <span className="text-zinc-300 dark:text-zinc-700 ml-1 transition-colors duration-700 group-hover:text-zinc-400 dark:group-hover:text-zinc-500">."</span>
                         </h2>
                     </motion.div>
 
@@ -250,7 +268,7 @@ const AboutLeadIn = () => {
                         </div>
                     </div>
                 </div>
-            </div>
+            </motion.div>
         </div>
     );
 };
@@ -441,7 +459,7 @@ const AuditFunnel = () => {
                 <div className="space-y-6 md:space-y-10 flex flex-col items-center px-6 relative z-10">
                     <motion.h4
                         style={{ scale, willChange: "transform" }}
-                        className="text-xl md:text-4xl lg:text-6xl font-black tracking-[-0.05em] text-foreground max-w-6xl tracking-tighter leading-[0.9] lg:px-12 uppercase text-center"
+                        className="text-4xl md:text-6xl lg:text-[7rem] font-black tracking-[-0.05em] text-foreground max-w-7xl tracking-tighter leading-[0.9] lg:px-6 uppercase text-center"
                     >
                         {t('architecting')} <br></br>
                         <motion.span
@@ -455,30 +473,17 @@ const AuditFunnel = () => {
                     </motion.h4>
                 </div>
 
-                <div className="flex flex-col items-center gap-8 pt-12">
+                <div className="flex flex-col items-center gap-8 pt-12 pointer-events-auto w-full px-6">
                     <motion.div
                         initial={{ opacity: 0 }}
                         whileInView={{ opacity: 1 }}
-                        transition={{ delay: 0.8 }}
-                        className="text-[10px] font-mono text-muted-foreground tracking-[0.5em] uppercase"
+                        transition={{ delay: 0.1, duration: 0.8 }}
+                        className="w-full max-w-4xl mx-auto"
                     >
-                        {tCommon('scrollAudit')}
+                        <Bucket trailImages={!isMobile ? images : undefined} />
                     </motion.div>
-                    <div className="relative h-40 w-px bg-black/5 dark:bg-white/[0.01] overflow-hidden">
-                        <motion.div
-                            style={{ scaleY: lineScaleY }}
-                            className="absolute top-0 left-0 w-full h-full bg-primary origin-top"
-                        />
-                    </div>
                 </div>
             </motion.div>
-
-            {/* Image Trail Layer - Disabled on Mobile for performance */}
-            {!isMobile && (
-                <div className="absolute inset-0 z-50">
-                    <ImageTrail items={images} variant={3} />
-                </div>
-            )}
 
             {/* Subtle Grain Texture Overlay */}
             <div className="absolute inset-0 pointer-events-none opacity-[0.03] mix-blend-overlay">

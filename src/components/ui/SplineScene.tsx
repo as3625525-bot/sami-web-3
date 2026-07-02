@@ -1,165 +1,75 @@
 'use client';
 
 import { useRef, useState, useEffect, type FC } from "react";
-import Image from "next/image";
 import { usePerformance } from "@/hooks/usePerformance";
+import Spline from '@splinetool/react-spline';
 
 interface SplineSceneProps {
     scene: string;
     className?: string;
 }
 
-
-
 export const SplineScene: FC<SplineSceneProps> = ({ scene, className }) => {
-    const splineRef = useRef<any>(null);
     const isMounted = useRef(true);
     const { isLowPowerMode } = usePerformance();
-    const [isLoaded, setIsLoaded] = useState(false);
+    const [isSceneLoaded, setIsSceneLoaded] = useState(false);
+    const [isVisible, setIsVisible] = useState(true);
+    const containerRef = useRef<HTMLDivElement>(null);
+    const splineApp = useRef<any>(null);
 
     useEffect(() => {
         isMounted.current = true;
-
-        if (isLowPowerMode) return; // Skip script loading in low power mode
-
-        const SCRIPT_ID = 'spline-viewer-script';
-        let script = document.getElementById(SCRIPT_ID) as HTMLScriptElement;
-
-        const handleLoad = () => {
-            if (isMounted.current) setIsLoaded(true);
-        };
-
-        if (!script) {
-            script = document.createElement('script');
-            script.id = SCRIPT_ID;
-            script.type = 'module';
-            script.src = 'https://unpkg.com/@splinetool/viewer@latest/build/spline-viewer.js';
-            script.async = true;
-            script.addEventListener('load', handleLoad);
-            document.body.appendChild(script);
-        } else {
-            if (customElements.get('spline-viewer')) {
-                handleLoad();
-            } else {
-                script.addEventListener('load', handleLoad);
-            }
-        }
-
         return () => {
             isMounted.current = false;
-            if (script) script.removeEventListener('load', handleLoad);
         };
-    }, [isLowPowerMode]); // Re-run if low power mode changes
+    }, []);
 
-    // Inject CSS into Shadow DOM non-destructively
+    // Intersection Observer to pause/play the heavy WebGL engine when out of view
     useEffect(() => {
-        if (isLowPowerMode) return; // Skip CSS injection in low power mode
+        if (isLowPowerMode || !containerRef.current) return;
 
-        let intervalId: NodeJS.Timeout;
-
-        const injectStyles = () => {
-            if (!isMounted.current) return;
-
-            const currentRef = splineRef.current;
-            if (currentRef && currentRef.shadowRoot) {
-                const shadow = currentRef.shadowRoot;
-
-                if (!shadow.querySelector('#spline-hide-logo-style')) {
-                    const style = document.createElement('style');
-                    style.id = 'spline-hide-logo-style';
-                    style.textContent = `
-                        #logo, 
-                        a[href*="spline.design"], 
-                        .spline-watermark,
-                        #spline-watermark-overlay,
-                        div[style*="bottom: 10px"],
-                        div[style*="position: absolute; bottom: 10px; right: 10px;"] { 
-                            display: none !important; 
-                            opacity: 0 !important; 
-                            visibility: hidden !important; 
-                            pointer-events: none !important;
-                        }
-                    `;
-                    shadow.appendChild(style);
-                }
-            }
-        };
-
-        const currentRef = splineRef.current;
-        if (currentRef) {
-            injectStyles();
-            currentRef.addEventListener('load', injectStyles);
-
-            // Limited attempts to handle late injection without eternal loop
-            let attempts = 0;
-            intervalId = setInterval(() => {
-                if (currentRef.shadowRoot && isMounted.current) {
-                    injectStyles();
-                    attempts++;
-                    if (attempts > 30) clearInterval(intervalId); // Stop after 30s
-                }
-            }, 1000);
-        }
-
-        return () => {
-            if (currentRef) currentRef.removeEventListener('load', injectStyles);
-            if (intervalId) clearInterval(intervalId);
-        };
-    }, [isLowPowerMode]); // Re-run if low power mode changes
-
-    // The visibility observer is not strictly needed if we're conditionally rendering the spline-viewer
-    // but keeping it for potential future use or if the component is rendered but hidden.
-    // However, for low power mode, we return early, so this won't run.
-    const containerRef = useRef<HTMLDivElement>(null);
-    const [isVisible, setIsVisible] = useState(false);
-
-    useEffect(() => {
-        if (isLowPowerMode) return; // Skip observer setup in low power mode
-
-        let resizeObserver: ResizeObserver | null = null;
-        let intersectionObserver: IntersectionObserver | null = null;
-        const state = { isIntersecting: false };
-
-        const updateVisibility = () => {
-            if (!containerRef.current || !isMounted.current) return;
-            const { width, height } = containerRef.current.getBoundingClientRect();
-            const hasValidSize = width > 1 && height > 1;
-            setIsVisible(state.isIntersecting && hasValidSize);
-        };
-
-        intersectionObserver = new IntersectionObserver(
+        const observer = new IntersectionObserver(
             ([entry]) => {
-                if (isMounted.current) {
-                    state.isIntersecting = entry.isIntersecting;
-                    updateVisibility();
+                const isIntersecting = entry.isIntersecting;
+                setIsVisible(isIntersecting);
+                
+                if (splineApp.current) {
+                    try {
+                        if (isIntersecting) {
+                            // Resume WebGL rendering
+                            splineApp.current.play();
+                        } else {
+                            // Pause WebGL rendering to save GPU and battery
+                            splineApp.current.stop();
+                        }
+                    } catch (e) {
+                        // Silently fallback if methods don't exist in this version
+                    }
                 }
             },
-            { threshold: 0.1 }
+            { rootMargin: "200px" } // Trigger slightly before it enters viewport
         );
 
-        resizeObserver = new ResizeObserver(() => {
-            if (isMounted.current) {
-                updateVisibility();
+        observer.observe(containerRef.current);
+        return () => observer.disconnect();
+    }, [isLowPowerMode]);
+
+    // Fallback timer just in case onLoad fails
+    useEffect(() => {
+        if (isLowPowerMode) return;
+        const timeoutId = setTimeout(() => {
+            if (isMounted.current && !isSceneLoaded) {
+                setIsSceneLoaded(true);
             }
-        });
-
-        if (containerRef.current) {
-            intersectionObserver.observe(containerRef.current);
-            resizeObserver.observe(containerRef.current);
-        }
-
-        return () => {
-            intersectionObserver?.disconnect();
-            resizeObserver?.disconnect();
-        };
-    }, [isLowPowerMode]); // Re-run if low power mode changes
+        }, 8000);
+        return () => clearTimeout(timeoutId);
+    }, [isLowPowerMode, isSceneLoaded]);
 
     if (isLowPowerMode) {
         return (
             <div className={`relative w-full h-full bg-background overflow-hidden ${className}`}>
                 <div className="absolute inset-0 bg-gradient-to-b from-primary/5 to-transparent opacity-20" />
                 <div className="absolute inset-0 flex items-center justify-center">
-                    {/* Minimal decorative element for mobile instead of 3D */}
                     <div className="w-64 h-64 bg-primary/10 blur-[100px] rounded-full animate-pulse-slow" />
                 </div>
             </div>
@@ -168,22 +78,58 @@ export const SplineScene: FC<SplineSceneProps> = ({ scene, className }) => {
 
     return (
         <div ref={containerRef} className={`relative w-full h-full overflow-hidden ${className || ''}`}>
-            <div className="w-full h-full pt-20">
-                <spline-viewer
-                    ref={splineRef}
-                    url={scene}
-                    loading-anim-type="spinner-small-dark"
-                    style={{
-                        width: '100%',
-                        height: '100%',
-                        transform: 'scale(1.2) translate3d(0,0,0)',
-                        transformOrigin: 'center center',
-                        display: isLoaded ? 'block' : 'none',
-                        opacity: isLoaded ? 1 : 0,
-                        transition: 'opacity 0.8s ease-in-out'
+            
+            {/* Global style to hide the react-spline watermark (not in shadow DOM) */}
+            <style dangerouslySetInnerHTML={{ __html: `
+                .spline-watermark,
+                div[style*="bottom: 16px"],
+                div[style*="bottom: 10px"],
+                a[href*="spline.design"] {
+                    display: none !important;
+                    opacity: 0 !important;
+                    pointer-events: none !important;
+                    visibility: hidden !important;
+                }
+            `}} />
+
+            <div className="w-full h-full pt-20 relative">
+                
+                {/* Custom Cinematic Loading State */}
+                {!isSceneLoaded && (
+                    <div className="absolute inset-0 flex flex-col items-center justify-center z-10 bg-transparent">
+                        <div className="relative flex items-center justify-center">
+                            <div className="absolute w-24 h-24 border border-foreground/10 rounded-full animate-[spin_3s_linear_infinite]" />
+                            <div className="absolute w-16 h-16 border-t-2 border-r-2 border-foreground/40 rounded-full animate-[spin_2s_linear_infinite_reverse]" />
+                            <div className="w-8 h-8 bg-foreground/20 rounded-full animate-pulse blur-sm" />
+                        </div>
+                        <p className="mt-8 text-xs font-mono text-foreground/50 tracking-[0.3em] uppercase animate-pulse">
+                            Initializing 3D Engine
+                        </p>
+                    </div>
+                )}
+
+                <div 
+                    className="w-full h-full transition-opacity duration-1000"
+                    style={{ 
+                        opacity: isSceneLoaded ? 1 : 0,
+                        visibility: isVisible ? 'visible' : 'hidden' 
                     }}
-                />
+                >
+                    <Spline
+                        scene={scene}
+                        onLoad={(app) => {
+                            splineApp.current = app;
+                            if (isMounted.current) setIsSceneLoaded(true);
+                        }}
+                        style={{
+                            width: '100%',
+                            height: '100%',
+                            transform: 'scale(1.2)',
+                            transformOrigin: 'center center'
+                        }}
+                    />
+                </div>
             </div>
         </div>
     );
-}
+};

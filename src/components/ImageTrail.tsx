@@ -332,25 +332,25 @@ class ImageTrailVariant3 {
       const rect = container.getBoundingClientRect();
       this.mousePos = getLocalPointerPos(ev, rect);
     };
-    container.addEventListener('mousemove', this.handlePointerMove);
-    container.addEventListener('touchmove', this.handlePointerMove);
+    window.addEventListener('mousemove', this.handlePointerMove);
+    window.addEventListener('touchmove', this.handlePointerMove);
 
     const initRender = (ev: MouseEvent | TouchEvent) => {
       const rect = container.getBoundingClientRect();
       this.mousePos = getLocalPointerPos(ev, rect);
       this.cacheMousePos = { ...this.mousePos };
       requestAnimationFrame(() => this.render());
-      container.removeEventListener('mousemove', initRender as EventListener);
-      container.removeEventListener('touchmove', initRender as EventListener);
+      window.removeEventListener('mousemove', initRender as EventListener);
+      window.removeEventListener('touchmove', initRender as EventListener);
     };
-    container.addEventListener('mousemove', initRender as EventListener);
-    container.addEventListener('touchmove', initRender as EventListener);
+    window.addEventListener('mousemove', initRender as EventListener);
+    window.addEventListener('touchmove', initRender as EventListener);
   }
 
   public destroy() {
     this.isDestroyed = true;
-    this.container.removeEventListener('mousemove', this.handlePointerMove);
-    this.container.removeEventListener('touchmove', this.handlePointerMove);
+    window.removeEventListener('mousemove', this.handlePointerMove);
+    window.removeEventListener('touchmove', this.handlePointerMove);
   }
 
   private render() {
@@ -414,11 +414,11 @@ class ImageTrailVariant3 {
         img.DOM.el,
         {
           duration: 0.6,
-          ease: 'power2',
+          ease: 'power2.in',
           opacity: 0,
-          scale: 0.2,
-          xPercent: () => gsap.utils.random(-30, 30),
-          yPercent: -200
+          scale: 0,
+          x: this.container.offsetWidth / 2 - (img.rect?.width ?? 0) / 2,
+          y: this.container.offsetHeight * 0.18 - (img.rect?.height ?? 0) / 2
         },
         0.6
       );

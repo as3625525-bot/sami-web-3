@@ -4,7 +4,7 @@ import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence, useMotionValue, useSpring, useMotionTemplate, motionValue, LayoutGroup } from 'framer-motion';
 import { useTranslations } from 'next-intl';
-import { Search, SortAsc, SortDesc, ExternalLink, X, Calendar, Building2, Trophy, Medal, Award, Target, ChevronRight, ChevronLeft, MousePointer2, Eye, Share2, PanelLeftClose, PanelLeftOpen } from 'lucide-react';
+import { Search, SortAsc, SortDesc, ExternalLink, X, Calendar, Building2, Trophy, Medal, Award, Target, ChevronRight, ChevronLeft, MousePointer2, Eye, Share2, PanelLeftClose, PanelLeftOpen, LayoutGrid, List } from 'lucide-react';
 import { cn, formatDate } from '@/lib/utils';
 import { portfolioData } from '@/data/portfolio';
 import { Achievement } from '@/types';
@@ -17,6 +17,7 @@ const FallingText = dynamic(() => import('@/components/effects/FallingText'), {
 import CertificateHeroScroll from '@/components/sections/CertificateHeroScroll';
 import { usePerformance } from '@/hooks/usePerformance';
 import { ErrorBoundary } from '@/components/ui/ErrorBoundary';
+import { useLenis } from 'lenis/react';
 
 const staggerContainer = {
     hidden: { opacity: 0 },
@@ -36,8 +37,9 @@ const AchievementCard = React.memo(React.forwardRef<HTMLDivElement, {
     onClick: () => void;
     index: number;
     isLowPowerMode?: boolean;
+    viewMode?: 'grid' | 'list';
 }>(
-    ({ achievement, onClick, index, isLowPowerMode }, ref) => {
+    ({ achievement, onClick, index, isLowPowerMode, viewMode = 'grid' }, ref) => {
         const [isHovered, setIsHovered] = useState(false);
         const mouseX = useMotionValue(0);
         const mouseY = useMotionValue(0);
@@ -88,12 +90,12 @@ const AchievementCard = React.memo(React.forwardRef<HTMLDivElement, {
         `;
 
         return (
-            <div
+            <motion.div
                 className="relative group block p-2 h-full w-full"
                 onMouseEnter={() => setIsHovered(true)}
                 onMouseLeave={() => setIsHovered(false)}
                 onMouseMove={handleMouseMove}
-                onClick={onClick}
+                onTap={onClick}
             >
                 <AnimatePresence>
                     {isHovered && (
@@ -116,7 +118,8 @@ const AchievementCard = React.memo(React.forwardRef<HTMLDivElement, {
                     transition={{ delay: index * 0.05, duration: 0.5, type: "spring", stiffness: 100 }}
                     whileHover={{ y: -4 }}
                     className={cn(
-                        "relative bg-card/90 dark:bg-card/40 rounded-2xl overflow-hidden border-2 border-zinc-400 dark:border-border/40 group-hover:border-foreground/20 transition-all duration-500 shadow-xl dark:shadow-none group-hover:shadow-2xl z-20 cursor-pointer",
+                        "relative bg-card/90 dark:bg-card/40 rounded-2xl overflow-hidden border-2 border-zinc-400 dark:border-border/40 group-hover:border-foreground/20 transition-all duration-500 shadow-xl dark:shadow-none group-hover:shadow-2xl z-20 cursor-pointer transform-gpu",
+                        viewMode === 'list' ? "flex flex-col sm:flex-row h-auto sm:h-48" : "flex flex-col",
                         !isLowPowerMode && "backdrop-blur-md"
                     )}
                     style={{ willChange: "transform, opacity" }}
@@ -124,23 +127,31 @@ const AchievementCard = React.memo(React.forwardRef<HTMLDivElement, {
                     {/* Animated Spotlight Effect */}
                     {!isLowPowerMode && (
                         <motion.div
-                            className="pointer-events-none absolute -inset-px opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-10"
+                            className="pointer-events-none absolute -inset-px opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-30 mix-blend-overlay"
                             style={{ background: spotlightBackground }}
                         />
                     )}
 
                     {/* Integrated Header: Image + Gradient/Icon */}
-                    <div className={cn(
-                        "relative h-44 w-full overflow-hidden transition-all duration-500 bg-gradient-to-br",
-                        config.gradient
-                    )}>
+                    <div 
+                        className={cn(
+                            "relative w-full overflow-hidden transition-all duration-500 bg-gradient-to-br shrink-0 transform-gpu",
+                            viewMode === 'list' ? "h-48 sm:h-full sm:w-64" : "h-44",
+                            config.gradient
+                        )}
+                        style={{ 
+                            clipPath: 'inset(0)',
+                            WebkitMaskImage: 'linear-gradient(black, black)',
+                            maskImage: 'linear-gradient(black, black)'
+                        }}
+                    >
                         {achievement.image ? (
                             <>
                                 {achievement.image.endsWith('.pdf') ? (
-                                    <div className="w-full h-full relative group-hover:scale-105 transition-transform duration-700">
+                                    <div className="absolute top-[-5%] left-[-5%] w-[110%] h-[110%] group-hover:scale-105 transition-transform duration-700 transform-gpu">
                                         <iframe
                                             src={`${achievement.image}#toolbar=0&navpanes=0&scrollbar=0`}
-                                            className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"
+                                            className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none border-0 bg-transparent"
                                             title={achievement.title}
                                             loading="lazy"
                                         />
@@ -151,11 +162,11 @@ const AchievementCard = React.memo(React.forwardRef<HTMLDivElement, {
                                     <img
                                         src={achievement.image}
                                         alt={achievement.title}
-                                        className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110 opacity-60 group-hover:opacity-100"
+                                        className="absolute top-[-1%] left-[-1%] w-[102%] h-[102%] object-cover transition-transform duration-700 group-hover:scale-110 opacity-60 group-hover:opacity-100 border-0"
                                         loading="lazy"
                                     />
                                 )}
-                                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent pointer-events-none" />
+                                <div className="absolute inset-0 z-10 bg-gradient-to-t from-black/80 via-black/20 to-transparent pointer-events-none" />
                             </>
                         ) : (
                             <motion.div
@@ -168,17 +179,17 @@ const AchievementCard = React.memo(React.forwardRef<HTMLDivElement, {
 
                         {/* Category Icon Badge */}
                         <motion.div
-                            className="absolute top-4 right-4 p-2.5 rounded-xl bg-white/80 dark:bg-foreground/10 backdrop-blur-md border border-foreground/10 shadow-lg z-20"
+                            className="absolute top-4 right-4 p-2.5 rounded-xl bg-white/90 dark:bg-black/40 backdrop-blur-md border border-black/5 dark:border-white/10 shadow-lg z-20"
                             whileHover={{ rotate: 15, scale: 1.1 }}
                         >
-                            <IconComponent className="w-4 h-4 text-foreground dark:text-white" />
+                            <IconComponent className="w-4 h-4 text-black dark:text-white" />
                         </motion.div>
 
                         {/* Type/Category Tags in Header */}
                         <div className="absolute top-4 left-4 flex gap-2 z-20">
                             <span className={cn(
-                                "px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-wider border border-foreground/10 text-foreground dark:text-white/90 shadow-sm",
-                                !isLowPowerMode ? "bg-white/80 dark:bg-foreground/10 backdrop-blur-md" : "bg-white/90 dark:bg-black/40"
+                                "px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-wider border shadow-sm text-black dark:text-white",
+                                !isLowPowerMode ? "bg-white/90 dark:bg-black/40 backdrop-blur-md border-black/5 dark:border-white/10" : "bg-white dark:bg-black/60 border-black/10 dark:border-white/20"
                             )}>
                                 {achievement.type || achievement.category}
                             </span>
@@ -186,33 +197,44 @@ const AchievementCard = React.memo(React.forwardRef<HTMLDivElement, {
 
                         {/* Credential ID - Mono style */}
                         <div className="absolute bottom-4 left-4 z-20">
-                            <div className="text-[10px] font-mono text-foreground/50 dark:text-white/50 uppercase tracking-widest mb-1">
+                            <div className="text-[10px] font-mono text-white/60 uppercase tracking-widest mb-1 shadow-black/50 drop-shadow-sm">
                                 {achievement.credentialId ? achievement.credentialId : "Verified Credential"}
                             </div>
                         </div>
 
                         {/* Date Overlay */}
-                        <div className="absolute bottom-4 right-4 z-20 px-2.5 py-1 rounded-lg bg-foreground/10 backdrop-blur-md border border-foreground/10">
+                        <div className="absolute bottom-4 right-4 z-20 px-2.5 py-1 rounded-lg bg-white/10 backdrop-blur-md border border-white/10">
                             <div className="flex items-center gap-1.5">
-                                <Calendar className="w-3 h-3 text-foreground/60 dark:text-white/60" />
-                                <span className="text-[10px] text-foreground/90 dark:text-white/90 font-bold">
+                                <Calendar className="w-3 h-3 text-white/70" />
+                                <span className="text-[10px] text-white/90 font-bold drop-shadow-sm">
                                     {new Date(achievement.date).toLocaleDateString('en-US', { month: 'short', year: 'numeric' }).toUpperCase()}
                                 </span>
                             </div>
                         </div>
                     </div>
 
-                    <div className="p-6 relative z-20 bg-gradient-to-b from-transparent to-card/20">
-                        <h3 className="text-lg font-bold leading-tight mb-3 group-hover:text-foreground transition-colors line-clamp-2 min-h-[3rem]">
-                            {achievement.title}
-                        </h3>
+                    <div className={cn(
+                        "relative z-20 bg-gradient-to-b from-transparent to-card/20 flex flex-col justify-between flex-1",
+                        viewMode === 'list' ? "p-6 -mt-[1px] border-t-[6px] border-[#333333] dark:border-[#050505] sm:mt-0 sm:border-t-0 sm:-ml-[1px] sm:border-l-[6px] sm:border-[#333333] sm:dark:border-[#050505]" : "p-6 -mt-[1px] border-t-[6px] border-[#333333] dark:border-[#050505]"
+                    )}>
+                        <div className="mb-4">
+                            <h3 className={cn(
+                                "font-bold leading-tight mb-3 group-hover:text-foreground transition-colors line-clamp-2",
+                                viewMode === 'list' ? "text-xl" : "text-lg min-h-[3rem]"
+                            )}>
+                                {achievement.title}
+                            </h3>
 
-                        <div className="flex items-center gap-2 mb-4">
-                            <Building2 className="w-3.5 h-3.5 text-muted-foreground/60" />
-                            <span className="text-[11px] text-muted-foreground font-medium">{achievement.issuer}</span>
+                            <div className="flex items-center gap-2">
+                                <Building2 className="w-3.5 h-3.5 text-muted-foreground/60" />
+                                <span className="text-[11px] text-muted-foreground font-medium">{achievement.issuer}</span>
+                            </div>
                         </div>
 
-                        <div className="flex items-center justify-between pt-4 border-t border-border/20">
+                        <div className={cn(
+                            "flex items-center justify-between border-border/20 mt-auto",
+                            viewMode === 'list' ? "pt-0 border-0" : "pt-4 border-t"
+                        )}>
                             <div className="flex items-center gap-2">
                                 <Eye className="w-4 h-4 text-muted-foreground/40" />
                                 <span className="text-[10px] text-muted-foreground/50 font-bold uppercase tracking-wider">Expand Archive</span>
@@ -226,7 +248,7 @@ const AchievementCard = React.memo(React.forwardRef<HTMLDivElement, {
                         </div>
                     </div>
                 </motion.div>
-            </div>
+            </motion.div>
         );
     }
 ));
@@ -314,15 +336,7 @@ const NavItem = React.memo(({ label, active, onClick, count, isCollapsed }: { la
     );
 });
 
-function AchievementModal({
-    achievement,
-    onClose,
-    onNext,
-    onPrev,
-    currentIndex,
-    totalCount,
-    isLowPowerMode
-}: {
+const AchievementModal = React.forwardRef<HTMLDivElement, {
     achievement: Achievement;
     onClose: () => void;
     onNext?: () => void;
@@ -330,23 +344,21 @@ function AchievementModal({
     currentIndex: number;
     totalCount?: number;
     isLowPowerMode?: boolean
-}) {
-    const [mounted, setMounted] = useState(false);
+}>(({
+    achievement,
+    onClose,
+    onNext,
+    onPrev,
+    currentIndex,
+    totalCount,
+    isLowPowerMode
+}, ref) => {
 
-    useEffect(() => {
-        setMounted(true);
-        return () => setMounted(false);
-    }, []);
-
-    // Keyboard navigation only (Scroll-lock handled by parent)
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
             if (e.key === 'ArrowRight') onNext?.();
             if (e.key === 'ArrowLeft') onPrev?.();
             if (e.key === 'Escape') {
-                // Instantly disable pointer events on this modal container
-                const container = document.getElementById('achievement-modal-portal');
-                if (container) container.style.pointerEvents = 'none';
                 onClose();
             }
         };
@@ -354,10 +366,11 @@ function AchievementModal({
         return () => window.removeEventListener('keydown', handleKeyDown);
     }, [onNext, onPrev, onClose]);
 
-    if (!mounted) return null;
+    if (typeof document === 'undefined') return null;
 
     return createPortal(
         <motion.div
+            ref={ref}
             id="achievement-modal-portal"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -366,11 +379,7 @@ function AchievementModal({
                 "fixed inset-0 z-[9999] flex items-center justify-center p-4 md:p-8 lg:p-12 overflow-hidden",
                 isLowPowerMode ? "bg-background/98" : "bg-background/40 backdrop-blur-2xl"
             )}
-            onClick={() => {
-                const container = document.getElementById('achievement-modal-portal');
-                if (container) container.style.pointerEvents = 'none';
-                onClose();
-            }}
+            onClick={() => onClose()}
         >
             <motion.div
                 layoutId={`achievement-${achievement.id}`}
@@ -388,8 +397,6 @@ function AchievementModal({
                         <button 
                             onClick={(e) => {
                                 e.stopPropagation();
-                                const container = document.getElementById('achievement-modal-portal');
-                                if (container) container.style.pointerEvents = 'none';
                                 onClose();
                             }}
                             className="w-3.5 h-3.5 rounded-full bg-[#FF5F56] hover:brightness-75 transition-all shadow-sm" 
@@ -524,7 +531,7 @@ function AchievementModal({
         </motion.div>,
         document.body
     );
-}
+});
 
 export default function AchievementsPage() {
     const t = useTranslations('achievements');
@@ -533,11 +540,15 @@ export default function AchievementsPage() {
     const [sortOrder, setSortOrder] = useState<'newest' | 'oldest'>('newest');
     const [activeCategory, setActiveCategory] = useState('all');
     const [selectedAchievement, setSelectedAchievement] = useState<Achievement | null>(null);
+    const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+
+    const lenis = useLenis();
 
     // Centralized Scroll Lock - Optimized to ONLY fire on Open/Close
     useEffect(() => {
         const body = document.body;
         if (selectedAchievement) {
+            if (lenis) lenis.stop();
             const isAlreadyLocked = body.getAttribute('data-modal-open') === 'true';
             if (!isAlreadyLocked) {
                 const originalStyle = window.getComputedStyle(body).overflow;
@@ -549,13 +560,14 @@ export default function AchievementsPage() {
                 body.setAttribute('data-original-overflow', originalStyle);
             }
         } else {
+            if (lenis) lenis.start();
             const originalStyle = body.getAttribute('data-original-overflow') || '';
             body.style.overflow = originalStyle === 'hidden' ? '' : originalStyle;
             body.style.paddingRight = '0px';
             body.removeAttribute('data-modal-open');
             body.removeAttribute('data-original-overflow');
         }
-    }, [!!selectedAchievement]); // Only fire when truthiness changes
+    }, [!!selectedAchievement, lenis]); // Only fire when truthiness changes
 
     const stats = useMemo(() => {
         const total = portfolioData.achievements.length;
@@ -798,6 +810,30 @@ export default function AchievementsPage() {
                                 >
                                     {sortOrder === 'newest' ? <SortDesc className="w-4 h-4" /> : <SortAsc className="w-4 h-4" />}
                                 </motion.button>
+                                <div className="flex bg-white dark:bg-secondary/20 rounded-xl border-2 border-zinc-300 dark:border-border/40 p-1 shadow-sm">
+                                    <motion.button
+                                        onClick={() => setViewMode('grid')}
+                                        whileHover={{ scale: 1.05 }}
+                                        whileTap={{ scale: 0.95 }}
+                                        className={cn(
+                                            "p-1.5 rounded-lg transition-all",
+                                            viewMode === 'grid' ? "bg-foreground/10 text-foreground" : "text-muted-foreground hover:text-foreground"
+                                        )}
+                                    >
+                                        <LayoutGrid className="w-4 h-4" />
+                                    </motion.button>
+                                    <motion.button
+                                        onClick={() => setViewMode('list')}
+                                        whileHover={{ scale: 1.05 }}
+                                        whileTap={{ scale: 0.95 }}
+                                        className={cn(
+                                            "p-1.5 rounded-lg transition-all",
+                                            viewMode === 'list' ? "bg-foreground/10 text-foreground" : "text-muted-foreground hover:text-foreground"
+                                        )}
+                                    >
+                                        <List className="w-4 h-4" />
+                                    </motion.button>
+                                </div>
                             </div>
                         </motion.div>
 
@@ -806,9 +842,11 @@ export default function AchievementsPage() {
                                 layout
                                 className={cn(
                                     "grid gap-5 transition-all duration-500",
-                                    isSidebarCollapsed
-                                        ? "grid-cols-1 md:grid-cols-2 xl:grid-cols-4"
-                                        : "grid-cols-1 md:grid-cols-2"
+                                    viewMode === 'list'
+                                        ? (isSidebarCollapsed ? "grid-cols-1 xl:grid-cols-2" : "grid-cols-1")
+                                        : isSidebarCollapsed
+                                            ? "grid-cols-1 md:grid-cols-2 xl:grid-cols-4"
+                                            : "grid-cols-1 md:grid-cols-2"
                                 )}
                             >
                                 <AnimatePresence mode="popLayout">
@@ -820,6 +858,7 @@ export default function AchievementsPage() {
                                                 onClick={() => setSelectedAchievement(achievement)}
                                                 index={index}
                                                 isLowPowerMode={isLowPowerMode}
+                                                viewMode={viewMode}
                                             />
                                         ))
                                     ) : (
