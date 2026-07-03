@@ -74,7 +74,7 @@ export default function StatsSection({ scrollYProgress, showOnly }: { scrollYPro
     );
 
     return (
-        <section className="relative bg-background overflow-visible flex flex-col items-center transition-colors duration-500">
+        <section className="relative z-20 bg-background overflow-visible flex flex-col items-center transition-colors duration-500">
             {/* Header for the Gallery Section */}
             {(showOnly === 'top' || !showOnly) && (
                 <>

@@ -271,7 +271,7 @@ function TypingIndicator() {
 }
 
 // ─── ChatWindow ───────────────────────────────────────────────────────────────
-function ChatWindow({ onClose, origin }: { onClose: () => void, origin?: {x: number, y: number} | null }) {
+function ChatWindow({ onClose, origin }: { onClose: () => void, origin?: { x: number, y: number } | null }) {
     const t = useTranslations("chatbot");
     const locale = useLocale();
 
@@ -472,8 +472,8 @@ function ChatWindow({ onClose, origin }: { onClose: () => void, origin?: {x: num
     return (
         <>
             {/* Invisible backdrop for click-outside to close */}
-            <div 
-                className="fixed inset-0 z-40" 
+            <div
+                className="fixed inset-0 z-40"
                 onClick={onClose}
                 aria-hidden="true"
             />
@@ -484,10 +484,10 @@ function ChatWindow({ onClose, origin }: { onClose: () => void, origin?: {x: num
                 transition={{ type: "spring", damping: 25, stiffness: 300 }}
                 className={cn(
                     "fixed z-50 flex flex-col",
-                    origin 
+                    origin
                         ? "top-1/2 left-1/2"
                         : (isExpanded ? "bottom-4 sm:bottom-12 right-4 sm:right-12" : "bottom-24 right-4 md:right-16"),
-                    isExpanded 
+                    isExpanded
                         ? "w-[calc(100vw-2rem)] sm:w-[600px] md:w-[700px] lg:w-[800px] h-[calc(100vh-2rem)] sm:h-[80vh] max-h-[800px]"
                         : "w-[calc(100vw-2rem)] sm:w-[420px] h-[600px] max-h-[85vh]",
                     "rounded-2xl shadow-2xl overflow-hidden",
@@ -496,153 +496,155 @@ function ChatWindow({ onClose, origin }: { onClose: () => void, origin?: {x: num
                 )}
                 style={origin ? { transformOrigin: "center" } : { maxWidth: isExpanded ? "800px" : "420px", transformOrigin: "bottom right" }}
             >
-            {/* Header */}
-            <div className="flex items-center justify-between px-4 py-3 border-b border-foreground/8 bg-foreground/3 flex-shrink-0">
-                <div className="flex items-center gap-2.5">
-                    <div className="relative">
-                        <div className="w-8 h-8 rounded-full bg-primary/15 border border-primary/25 flex items-center justify-center">
-                            <Bot className="w-4 h-4 text-primary" />
+                {/* Header */}
+                <div className="flex items-center justify-between px-4 py-3 border-b border-foreground/8 bg-foreground/3 flex-shrink-0">
+                    <div className="flex items-center gap-2.5">
+                        <div className="relative">
+                            <div className="w-8 h-8 rounded-full bg-primary/15 border border-primary/25 flex items-center justify-center">
+                                <Bot className="w-4 h-4 text-primary" />
+                            </div>
+                            <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-emerald-500 border-2 border-background" />
                         </div>
-                        <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-emerald-500 border-2 border-background" />
+                        <div>
+                            <p className="text-sm font-semibold leading-none">{t("title")}</p>
+                            <p className="text-[11px] text-foreground/50 mt-0.5">
+                                {t("subtitle")}
+                            </p>
+                        </div>
                     </div>
-                    <div>
-                        <p className="text-sm font-semibold leading-none">{t("title")}</p>
-                        <p className="text-[11px] text-foreground/50 mt-0.5">
-                            {t("subtitle")}
-                        </p>
-                    </div>
-                </div>
-                <div className="flex items-center gap-1">
-                    <button
-                        onClick={() => setIsExpanded(!isExpanded)}
-                        className="w-7 h-7 rounded-full flex items-center justify-center text-foreground/50 hover:text-foreground hover:bg-foreground/8 transition-colors"
-                        aria-label={isExpanded ? "Collapse" : "Expand"}
-                    >
-                        {isExpanded ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
-                    </button>
-                    <button
-                        onClick={onClose}
-                        className="w-7 h-7 rounded-full flex items-center justify-center text-foreground/50 hover:text-foreground hover:bg-foreground/8 transition-colors"
-                        aria-label={t("close")}
-                    >
-                        <X className="w-4 h-4" />
-                    </button>
-                </div>
-            </div>
-
-            {/* Messages area */}
-            <div
-                ref={scrollContainerRef}
-                onScroll={handleScroll}
-                className="flex-1 overflow-y-auto px-3.5 py-4 space-y-4 scrollbar-thin scrollbar-thumb-foreground/10 scrollbar-track-transparent"
-            >
-                {messages.map((msg, idx) => (
-                    <MessageBubble
-                        key={msg.id}
-                        message={msg}
-                        onRetry={msg.error && idx === messages.length - 1 ? handleRetry : undefined}
-                    />
-                ))}
-
-                <AnimatePresence>
-                    {isLoading && <TypingIndicator />}
-                </AnimatePresence>
-
-                {/* Suggested questions */}
-                <AnimatePresence>
-                    {showSuggestions && !isLoading && (
-                        <motion.div
-                            initial={{ opacity: 0, y: 6 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            exit={{ opacity: 0, y: 6 }}
-                            className="flex flex-wrap gap-2 pt-1"
+                    <div className="flex items-center gap-1">
+                        <button
+                            onClick={() => setIsExpanded(!isExpanded)}
+                            className="w-7 h-7 rounded-full flex items-center justify-center text-foreground/50 hover:text-foreground hover:bg-foreground/8 transition-colors"
+                            aria-label={isExpanded ? "Collapse" : "Expand"}
                         >
-                            {SUGGESTED_QUESTIONS.map((q) => (
-                                <button
-                                    key={q}
-                                    onClick={() => sendMessage(q)}
-                                    className={cn(
-                                        "text-xs px-3 py-1.5 rounded-full border transition-all",
-                                        "bg-foreground/5 border-foreground/10 text-foreground/70",
-                                        "hover:bg-primary/10 hover:border-primary/30 hover:text-foreground",
-                                        "active:scale-95"
-                                    )}
-                                >
-                                    {q}
-                                </button>
-                            ))}
-                        </motion.div>
+                            {isExpanded ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
+                        </button>
+                        <button
+                            onClick={onClose}
+                            className="w-7 h-7 rounded-full flex items-center justify-center text-foreground/50 hover:text-foreground hover:bg-foreground/8 transition-colors"
+                            aria-label={t("close")}
+                        >
+                            <X className="w-4 h-4" />
+                        </button>
+                    </div>
+                </div>
+
+                {/* Messages area */}
+                <div
+                    ref={scrollContainerRef}
+                    onScroll={handleScroll}
+                    data-lenis-prevent
+                    className="flex-1 overflow-y-auto px-3.5 py-4 space-y-4 scrollbar-thin scrollbar-thumb-foreground/10 scrollbar-track-transparent"
+                >
+                    {messages.map((msg, idx) => (
+                        <MessageBubble
+                            key={msg.id}
+                            message={msg}
+                            onRetry={msg.error && idx === messages.length - 1 ? handleRetry : undefined}
+                        />
+                    ))}
+
+                    <AnimatePresence>
+                        {isLoading && <TypingIndicator />}
+                    </AnimatePresence>
+
+                    {/* Suggested questions */}
+                    <AnimatePresence>
+                        {showSuggestions && !isLoading && (
+                            <motion.div
+                                initial={{ opacity: 0, y: 6 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                exit={{ opacity: 0, y: 6 }}
+                                className="flex flex-wrap gap-2 pt-1"
+                            >
+                                {SUGGESTED_QUESTIONS.map((q) => (
+                                    <button
+                                        key={q}
+                                        onClick={() => sendMessage(q)}
+                                        className={cn(
+                                            "text-xs px-3 py-1.5 rounded-full border transition-all",
+                                            "bg-foreground/5 border-foreground/10 text-foreground/70",
+                                            "hover:bg-primary/10 hover:border-primary/30 hover:text-foreground",
+                                            "active:scale-95"
+                                        )}
+                                    >
+                                        {q}
+                                    </button>
+                                ))}
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
+
+                    <div ref={messagesEndRef} />
+                </div>
+
+                {/* Scroll to bottom button */}
+                <AnimatePresence>
+                    {showScrollBtn && (
+                        <motion.button
+                            initial={{ opacity: 0, scale: 0.8 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            exit={{ opacity: 0, scale: 0.8 }}
+                            onClick={() => scrollToBottom()}
+                            className={cn(
+                                "absolute right-3 bottom-20 z-10",
+                                "w-7 h-7 rounded-full flex items-center justify-center",
+                                "bg-background border border-foreground/15 shadow-md",
+                                "text-foreground/60 hover:text-foreground transition-colors"
+                            )}
+                        >
+                            <ChevronDown className="w-3.5 h-3.5" />
+                        </motion.button>
                     )}
                 </AnimatePresence>
 
-                <div ref={messagesEndRef} />
-            </div>
-
-            {/* Scroll to bottom button */}
-            <AnimatePresence>
-                {showScrollBtn && (
-                    <motion.button
-                        initial={{ opacity: 0, scale: 0.8 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        exit={{ opacity: 0, scale: 0.8 }}
-                        onClick={() => scrollToBottom()}
-                        className={cn(
-                            "absolute right-3 bottom-20 z-10",
-                            "w-7 h-7 rounded-full flex items-center justify-center",
-                            "bg-background border border-foreground/15 shadow-md",
-                            "text-foreground/60 hover:text-foreground transition-colors"
-                        )}
-                    >
-                        <ChevronDown className="w-3.5 h-3.5" />
-                    </motion.button>
-                )}
-            </AnimatePresence>
-
-            {/* Input area */}
-            <div className="flex-shrink-0 px-3.5 py-3 border-t border-foreground/8 bg-foreground/2">
-                <div className="flex items-end gap-2">
-                    <textarea
-                        ref={inputRef}
-                        value={input}
-                        onChange={handleInputChange}
-                        onKeyDown={handleKeyDown}
-                        disabled={isLoading}
-                        placeholder={t("placeholder")}
-                        rows={1}
-                        className={cn(
-                            "flex-1 resize-none rounded-xl px-3.5 py-2.5 text-sm",
-                            "bg-foreground/5 border border-foreground/10",
-                            "placeholder:text-foreground/35 text-foreground",
-                            "focus:outline-none focus:border-primary/40 focus:bg-foreground/7",
-                            "transition-colors disabled:opacity-50",
-                            "min-h-[40px] max-h-[120px] leading-relaxed"
-                        )}
-                        style={{ height: "40px" }}
-                    />
-                    <button
-                        onClick={() => sendMessage(input)}
-                        disabled={isLoading || !input.trim()}
-                        className={cn(
-                            "flex-shrink-0 w-10 h-10 rounded-xl flex items-center justify-center",
-                            "bg-primary text-primary-foreground",
-                            "transition-all active:scale-95",
-                            "disabled:opacity-40 disabled:cursor-not-allowed disabled:active:scale-100",
-                            "hover:opacity-90"
-                        )}
-                        aria-label="Send message"
-                    >
-                        {isLoading ? (
-                            <Loader2 className="w-4 h-4 animate-spin" />
-                        ) : (
-                            <Send className="w-4 h-4" />
-                        )}
-                    </button>
+                {/* Input area */}
+                <div className="flex-shrink-0 px-3.5 py-3 border-t border-foreground/8 bg-foreground/2">
+                    <div className="flex items-end gap-2">
+                        <textarea
+                            ref={inputRef}
+                            data-lenis-prevent
+                            value={input}
+                            onChange={handleInputChange}
+                            onKeyDown={handleKeyDown}
+                            disabled={isLoading}
+                            placeholder={t("placeholder")}
+                            rows={1}
+                            className={cn(
+                                "flex-1 resize-none rounded-xl px-3.5 py-2.5 text-sm",
+                                "bg-foreground/5 border border-foreground/10",
+                                "placeholder:text-foreground/35 text-foreground",
+                                "focus:outline-none focus:border-primary/40 focus:bg-foreground/7",
+                                "transition-colors disabled:opacity-50",
+                                "min-h-[40px] max-h-[120px] leading-relaxed"
+                            )}
+                            style={{ height: "40px" }}
+                        />
+                        <button
+                            onClick={() => sendMessage(input)}
+                            disabled={isLoading || !input.trim()}
+                            className={cn(
+                                "flex-shrink-0 w-10 h-10 rounded-xl flex items-center justify-center",
+                                "bg-primary text-primary-foreground",
+                                "transition-all active:scale-95",
+                                "disabled:opacity-40 disabled:cursor-not-allowed disabled:active:scale-100",
+                                "hover:opacity-90"
+                            )}
+                            aria-label="Send message"
+                        >
+                            {isLoading ? (
+                                <Loader2 className="w-4 h-4 animate-spin" />
+                            ) : (
+                                <Send className="w-4 h-4" />
+                            )}
+                        </button>
+                    </div>
+                    <p className="text-[10px] text-foreground/30 mt-1.5 text-center">
+                        {t("inputHint")}
+                    </p>
                 </div>
-                <p className="text-[10px] text-foreground/30 mt-1.5 text-center">
-                    {t("inputHint")}
-                </p>
-            </div>
-        </motion.div>
+            </motion.div>
         </>
     );
 }
@@ -651,7 +653,7 @@ function ChatWindow({ onClose, origin }: { onClose: () => void, origin?: {x: num
 export function ChatBot({ headless = false }: { headless?: boolean }) {
     const [isOpen, setIsOpen] = useState(false);
     const [hasNewMsg, setHasNewMsg] = useState(false);
-    const [origin, setOrigin] = useState<{x: number, y: number} | null>(null);
+    const [origin, setOrigin] = useState<{ x: number, y: number } | null>(null);
 
     const toggle = useCallback(() => {
         setOrigin(null);

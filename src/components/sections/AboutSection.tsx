@@ -24,7 +24,7 @@ import { IdentitySequence } from "./IdentitySequence";
 import ScrollAdventure from "@/components/ui/animated-scroll";
 import Bucket from "@/components/ui/bucket";
 import { ArgentLoopInfiniteSlider } from "@/components/ui/argent-loop-infinite-slider";
-import TeamShowcase from "@/components/ui/team-showcase";
+import { HorizontalTimeline } from "@/components/ui/horizontal-timeline";
 import { CertificateShowcase } from "@/components/ui/certificate-marquee";
 import { GitHubShowcase } from "@/components/ui/github-showcase";
 import KaggleShowcase from "@/components/ui/kaggle-showcase";
@@ -184,7 +184,7 @@ const AboutLeadIn = () => {
     return (
         <div className="w-full max-w-[1650px] mx-auto px-6 py-6 flex justify-center items-center">
             {/* The Reference Card Container (Gambar 1 Style with Dark/Light Support) */}
-            <motion.div 
+            <motion.div
                 initial="rest"
                 whileHover="hover"
                 className="relative w-full bg-white dark:bg-black border border-red-600/20 dark:border-red-600/40 p-6 md:p-12 lg:p-16 overflow-hidden shadow-xl dark:shadow-2xl transition-colors duration-500"
@@ -201,7 +201,7 @@ const AboutLeadIn = () => {
 
                 {/* 3. Glare Sweep Effect (Premium Hover Shine via Framer Motion) */}
                 <div className="absolute inset-0 z-30 pointer-events-none overflow-hidden">
-                    <motion.div 
+                    <motion.div
                         variants={{
                             rest: { left: "-150%" },
                             hover: { left: "150%" }
@@ -422,6 +422,16 @@ const AuditFunnel = () => {
     const scale = useTransform(scrollYProgress, [0, 0.5], [0.6, 1]);
     const lineScaleY = useTransform(scrollYProgress, [0.3, 0.8], [0, 1]);
 
+    // Exit parallax to transition smoothly into the next section
+    const { scrollYProgress: exitProgressRaw } = useScroll({
+        target: sectionRef,
+        offset: ["start start", "end start"]
+    });
+    const exitProgress = useSpring(exitProgressRaw, { stiffness: 100, damping: 30, restDelta: 0.001 });
+    const yExit = useTransform(exitProgress, [0, 1], ["0%", "40%"]);
+    const scaleExit = useTransform(exitProgress, [0, 1], [1, 0.85]);
+    const opacityExit = useTransform(exitProgress, [0, 1], [1, 0]);
+
     const [images, setImages] = useState<string[]>([]);
 
     useEffect(() => {
@@ -448,32 +458,32 @@ const AuditFunnel = () => {
     }, []);
 
     return (
-        <div ref={sectionRef} className="relative overflow-hidden group min-h-[80vh] md:min-h-[120vh] flex items-center justify-center bg-background z-30 pb-10 md:pb-32">
-            <motion.div
-                className="flex flex-col items-center text-center py-20 md:py-40 space-y-12 md:space-y-16 relative z-10 pointer-events-none"
-                initial={{ opacity: 0 }}
-                whileInView={{ opacity: 1 }}
-                viewport={{ once: true }}
-                transition={{ duration: 1 }}
-            >
-                <div className="space-y-6 md:space-y-10 flex flex-col items-center px-6 relative z-10">
+        <div ref={sectionRef} className="relative overflow-visible group min-h-[80vh] md:min-h-[120vh] flex items-center justify-center bg-background z-10 pb-10 md:pb-32">
+            <div className="flex flex-col items-center text-center py-20 md:py-40 space-y-12 md:space-y-16 pointer-events-none w-full origin-top">
+                <motion.div
+                    style={{ y: yExit, scale: scaleExit, opacity: opacityExit }}
+                    className="space-y-6 md:space-y-10 flex flex-col items-center px-6 relative z-10 mix-blend-difference w-full"
+                >
                     <motion.h4
                         style={{ scale, willChange: "transform" }}
-                        className="text-4xl md:text-6xl lg:text-[7rem] font-black tracking-[-0.05em] text-foreground max-w-7xl tracking-tighter leading-[0.9] lg:px-6 uppercase text-center"
+                        className="text-4xl md:text-6xl lg:text-[7rem] font-black tracking-[-0.05em] text-white max-w-7xl tracking-tighter leading-[0.9] lg:px-6 uppercase text-center"
                     >
                         {t('architecting')} <br></br>
                         <motion.span
                             initial={{ opacity: 0, y: 15 }}
                             whileInView={{ opacity: 1, y: 0 }}
                             transition={{ delay: 0.4 }}
-                            className="text-primary italic font-serif-elegant font-light lowercase tracking-normal"
+                            className="text-white italic font-serif-elegant font-light lowercase tracking-normal"
                         >
                             {t('digitalReality')}
                         </motion.span>.
                     </motion.h4>
-                </div>
+                </motion.div>
 
-                <div className="flex flex-col items-center gap-8 pt-12 pointer-events-auto w-full px-6">
+                <motion.div
+                    style={{ y: yExit, scale: scaleExit, opacity: opacityExit }}
+                    className="flex flex-col items-center gap-8 pt-12 pointer-events-auto w-full px-6"
+                >
                     <motion.div
                         initial={{ opacity: 0 }}
                         whileInView={{ opacity: 1 }}
@@ -482,10 +492,8 @@ const AuditFunnel = () => {
                     >
                         <Bucket trailImages={!isMobile ? images : undefined} />
                     </motion.div>
-                </div>
-            </motion.div>
-
-            {/* Subtle Grain Texture Overlay */}
+                </motion.div>
+            </div>
             <div className="absolute inset-0 pointer-events-none opacity-[0.03] mix-blend-overlay">
                 <div className="absolute inset-0 bg-[url('/noise.svg')]" />
             </div>
@@ -572,7 +580,7 @@ const ScrollHijackSection = () => {
     );
 };
 
-export default function AboutSection() {
+export default function AboutSection() { console.log('SHOWCASE MEMBERS:', showcaseMembers.map(m => m.id));
     const containerRef = useRef<HTMLElement>(null);
     const { scrollYProgress } = useScroll({
         target: containerRef,
@@ -621,20 +629,66 @@ export default function AboutSection() {
                             className="w-full flex flex-col items-center max-w-[1700px] px-4 md:px-6"
                         >
                             <div className="mb-6 md:mb-10 text-center space-y-4">
-                                <h3 className="text-foreground text-3xl md:text-5xl font-black tracking-tighter">
-                                    View My Related Experience
-                                </h3>
-                                <p className="text-muted-foreground text-[10px] md:text-xs font-mono uppercase tracking-[0.4em]">
-                                    Professional Background
-                                </p>
                             </div>
-                            <div className="w-full">
-                                <TeamShowcase members={showcaseMembers} />
+                            <div className="w-full pb-0">
+                                <HorizontalTimeline data={showcaseMembers.map((member) => ({
+                                    title: member.id === 'view-more' ? 'Explore all experiences' : (member.role || member.name),
+                                    isEnd: member.id === 'view-more',
+                                    period: 'period' in member ? member.period : undefined,
+                                    content: member.id === 'view-more' ? (
+                                        <div className="relative flex items-center h-[140px] w-[200px]">
+                                            <div className="absolute left-6 transition-all duration-500 opacity-100 group-hover:opacity-0 group-hover:scale-50 z-20">
+                                                <div className="p-4 rounded-full bg-neutral-100 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 shadow-sm flex items-center justify-center">
+                                                    <ArrowUpRight className="w-8 h-8 text-neutral-600 dark:text-neutral-400" />
+                                                </div>
+                                            </div>
+                                            <Link
+                                                href={member.social?.website || '/experience'}
+                                                className="absolute left-0 flex flex-col items-center justify-center p-6 bg-white/40 dark:bg-black/30 border border-white/60 dark:border-white/10 rounded-2xl backdrop-blur-xl shadow-[0_8px_30px_rgb(0,0,0,0.12)] w-[200px] h-[140px] opacity-0 scale-95 pointer-events-none group-hover:opacity-100 group-hover:scale-100 group-hover:pointer-events-auto transition-all duration-500 z-30 group/btn hover:shadow-[0_8px_30px_rgb(0,0,0,0.2)] hover:border-white/80 dark:hover:border-white/20 hover:bg-white/50 dark:hover:bg-black/40"
+                                            >
+                                                <span className="text-base font-bold text-center text-neutral-900 dark:text-white drop-shadow-sm">
+                                                    Explore all experiences
+                                                </span>
+                                            </Link>
+                                        </div>
+                                    ) : (
+                                        <div className="flex flex-col gap-4 w-[320px] md:w-[400px] border border-neutral-200 dark:border-neutral-800 p-6 rounded-2xl bg-white/80 dark:bg-neutral-950/80 backdrop-blur-md shadow-xl mt-4">
+                                            <div className="flex flex-col gap-2">
+                                                <div className="flex flex-row items-center justify-between">
+                                                    <h4 className="text-lg font-bold text-neutral-900 dark:text-white leading-tight">
+                                                        {member.name}
+                                                    </h4>
+                                                </div>
+                                            </div>
+
+                                            {'description' in member && member.description && (
+                                                <p className="text-sm font-normal text-neutral-600 dark:text-neutral-400 leading-relaxed mt-1 line-clamp-3" title={member.description}>
+                                                    {member.description}
+                                                </p>
+                                            )}
+
+                                            <div className="w-full mt-4 rounded-xl border border-neutral-200 dark:border-neutral-800 overflow-hidden relative group/card h-32">
+                                                <img
+                                                    src={member.image}
+                                                    alt={member.name}
+                                                    className="w-full h-full object-cover opacity-90 group-hover/card:opacity-100 transition-opacity duration-500 group-hover/card:scale-105"
+                                                />
+                                                {member.social?.website && (
+                                                    <div className="absolute inset-0 bg-black/50 opacity-0 group-hover/card:opacity-100 transition-opacity duration-300 flex items-center justify-center backdrop-blur-sm">
+                                                        <Link href={member.social.website} target="_blank" className="px-5 py-2.5 bg-white text-black text-xs font-bold rounded-full hover:scale-105 transition-transform">
+                                                            View Details
+                                                        </Link>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
+                                    )
+                                }))} />
                             </div>
                         </motion.div>
 
                         {/* Certificate Showcase Section */}
-                        <div className="w-full mt-32 md:mt-48">
+                        <div className="w-full mt-8 md:mt-12">
                             <CertificateShowcase />
                         </div>
 

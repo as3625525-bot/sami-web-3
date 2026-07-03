@@ -12,11 +12,13 @@ import dynamic from 'next/dynamic';
 const MarqueeClosing = dynamic(() => import('@/components/sections/blog/MarqueeClosing').then(m => m.MarqueeClosing), {
     ssr: false,
 });
-import { Search, SortDesc, SortAsc } from 'lucide-react';
+import { Search, SortDesc, SortAsc, LayoutGrid, List } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 import { usePerformance } from '@/hooks/usePerformance';
 import { ErrorBoundary } from '@/components/ui/ErrorBoundary';
+
+import FlowingMenu from '@/components/ui/flowing-menu';
 
 function BlogContent() {
     const t = useTranslations('blog');
@@ -26,6 +28,7 @@ function BlogContent() {
     const [currentPage, setCurrentPage] = useState(1);
     const [sortBy, setSortBy] = useState<'latest' | 'oldest'>('latest');
     const [isHoveringSort, setIsHoveringSort] = useState(false);
+    const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
     const { isLowPowerMode } = usePerformance();
     const POSTS_PER_PAGE = 9;
 
@@ -233,9 +236,38 @@ function BlogContent() {
                             })}
                         </div>
 
-                        <div className="flex items-center gap-6 w-full md:w-auto">
-                            {/* Sort Badge */}
-                            <div className="relative group">
+                        <div className="flex items-center gap-4 md:gap-6 w-full md:w-auto">
+                            <div className="flex items-center gap-3">
+                                {/* View Mode Toggle */}
+                                <div className="flex bg-foreground/5 p-1 rounded-xl border border-foreground/10">
+                                    <button
+                                        onClick={() => setViewMode('grid')}
+                                        className={cn(
+                                            "p-2 rounded-lg transition-all duration-300",
+                                            viewMode === 'grid' 
+                                                ? "bg-foreground text-background shadow-md" 
+                                                : "text-muted-foreground hover:text-foreground hover:bg-foreground/10"
+                                        )}
+                                        aria-label="Grid View"
+                                    >
+                                        <LayoutGrid size={18} />
+                                    </button>
+                                    <button
+                                        onClick={() => setViewMode('list')}
+                                        className={cn(
+                                            "p-2 rounded-lg transition-all duration-300",
+                                            viewMode === 'list' 
+                                                ? "bg-foreground text-background shadow-md" 
+                                                : "text-muted-foreground hover:text-foreground hover:bg-foreground/10"
+                                        )}
+                                        aria-label="List View"
+                                    >
+                                        <List size={18} />
+                                    </button>
+                                </div>
+                                
+                                {/* Sort Badge */}
+                                <div className="relative group">
                                 <AnimatePresence>
                                     {isHoveringSort && (
                                         <motion.div
@@ -266,6 +298,7 @@ function BlogContent() {
                                         <SortAsc size={20} strokeWidth={1.5} />
                                     )}
                                 </button>
+                            </div>
                             </div>
 
                             <div className="relative flex-1 md:w-80 group">
@@ -316,19 +349,33 @@ function BlogContent() {
                             </div>
                         </motion.div>
 
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
-                            <AnimatePresence mode="popLayout">
-                                {paginatedPosts.map((post, idx) => (
-                                    <BlogCard
-                                        key={post.id}
-                                        post={post}
-                                        index={idx}
-                                        isHovered={hoveredCardId === post.id}
-                                        isLowPowerMode={isLowPowerMode}
-                                    />
-                                ))}
-                            </AnimatePresence>
-                        </div>
+                        {viewMode === 'grid' ? (
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
+                                <AnimatePresence mode="popLayout">
+                                    {paginatedPosts.map((post, idx) => (
+                                        <BlogCard
+                                            key={post.id}
+                                            post={post}
+                                            index={idx}
+                                            isHovered={hoveredCardId === post.id}
+                                            isLowPowerMode={isLowPowerMode}
+                                        />
+                                    ))}
+                                </AnimatePresence>
+                            </div>
+                        ) : (
+                            <div style={{ height: '800px', position: 'relative' }} className="w-full overflow-hidden">
+                                <FlowingMenu 
+                                    items={paginatedPosts.map(post => ({
+                                        link: `/blog/${post.slug}`,
+                                        text: post.title,
+                                        image: post.image,
+                                        category: t(`categories.${post.category}`),
+                                        date: new Date(post.date).toLocaleDateString('en-US', { day: '2-digit', month: 'short', year: 'numeric' }).toUpperCase()
+                                    }))}
+                                />
+                            </div>
+                        )}
 
                         {/* Pagination - Modern Minimalist Editorial */}
                         {totalPages > 1 && (

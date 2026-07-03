@@ -254,7 +254,7 @@ export default function FallingText({
     return (
         <div
             ref={containerRef}
-            className="relative z-[1] w-full h-full cursor-pointer text-center overflow-hidden"
+            className="relative z-[1] w-full h-full cursor-pointer text-center"
             onClick={trigger === 'click' ? handleTrigger : undefined}
             onMouseEnter={trigger === 'hover' ? handleTrigger : undefined}
         >

@@ -1,8 +1,9 @@
 import * as React from "react";
 import { motion, useScroll, useTransform, useSpring } from "framer-motion";
-import { ArrowRight, ChevronDown, Github } from "lucide-react";
+import { ArrowRight, ChevronDown, Github, ArrowUpRight } from "lucide-react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
+import MagneticEffect from "@/components/ui/MagneticEffect";
 
 interface ProjectData {
   title: string;
@@ -208,9 +209,10 @@ export function ArgentLoopInfiniteSlider() {
         .minimap-item-info-row:nth-child(2) p { color: #666; font-weight: 700; }
         .minimap-item-info-row:nth-child(3) p { color: #999; font-weight: 500; font-size: 9.5px; text-transform: lowercase; }
         
+        /* DEFAULT (Light Mode) Base State */
         .custom-btn {
-            background: #c1e44a;
-            color: black;
+            background: black;
+            color: white;
             border-radius: 9999px;
             padding: 1.25rem 3rem;
             font-weight: 800;
@@ -224,8 +226,8 @@ export function ArgentLoopInfiniteSlider() {
         }
         .custom-btn-arrow,
         .custom-btn-github {
-            background: #c1e44a;
-            color: black;
+            background: black;
+            color: white;
             width: 58px;
             height: 58px;
             border-radius: 50%;
@@ -235,23 +237,24 @@ export function ArgentLoopInfiniteSlider() {
             transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
         }
 
-        /* Independent GitHub hover */
-        .dark .custom-btn-github:hover {
-            background: white !important;
-            color: black !important;
+        /* DARK MODE Base State */
+        .dark .custom-btn,
+        .dark .custom-btn-arrow,
+        .dark .custom-btn-github {
+            background: white;
+            color: black;
         }
-        .dark .custom-btn-github:hover svg {
+
+        /* Independent GitHub hover */
+        .custom-btn-github:hover {
+            background: #c1e44a !important;
             color: black !important;
         }
 
         /* Synchronized View More + Arrow hover */
-        .dark .group-projects:hover .custom-btn,
-        .dark .group-projects:hover .custom-btn-arrow {
-            background: white !important;
-            color: black !important;
-        }
-
-        .dark .group-projects:hover .custom-btn-arrow svg {
+        .group-projects:hover .custom-btn,
+        .group-projects:hover .custom-btn-arrow {
+            background: #c1e44a !important;
             color: black !important;
         }
 
@@ -349,24 +352,28 @@ export function ArgentLoopInfiniteSlider() {
                 }}
               >
                 <div className="flex items-center gap-4 pointer-events-auto">
-                  <a 
-                    href="https://github.com/Arfazrll" 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    className="custom-btn-github hover:scale-110 active:scale-95 transition-transform shadow-xl"
-                    title="GitHub Profile"
-                  >
-                    <Github className="w-6 h-6" />
-                  </a>
+                  <MagneticEffect>
+                    <a 
+                      href="https://github.com/Arfazrll" 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="custom-btn-github hover:scale-110 active:scale-95 transition-transform shadow-xl block"
+                      title="GitHub Profile"
+                    >
+                      <Github className="w-6 h-6" />
+                    </a>
+                  </MagneticEffect>
                   
-                  <div className="group-projects flex items-center gap-2">
-                    <Link href="/projects" className="custom-btn group-hover:scale-105 active:scale-95 group-hover:shadow-[0_0_30px_rgba(193,228,74,0.3)]">
-                      View More
-                    </Link>
-                    <Link href="/projects" className="custom-btn-arrow group-hover:scale-110 active:scale-95 group-hover:rotate-45 transition-transform shadow-xl">
-                      <ArrowRight className="w-6 h-6" />
-                    </Link>
-                  </div>
+                  <MagneticEffect>
+                    <div className="group-projects flex items-center gap-2">
+                      <Link href="/projects" className="custom-btn group-hover:scale-105 active:scale-95 group-hover:shadow-[0_0_30px_rgba(193,228,74,0.3)]">
+                        View More
+                      </Link>
+                      <Link href="/projects" className="custom-btn-arrow group-hover:scale-110 active:scale-95 transition-transform shadow-xl">
+                        <ArrowUpRight className="w-6 h-6 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
+                      </Link>
+                    </div>
+                  </MagneticEffect>
                 </div>
               </motion.div>
             </div>

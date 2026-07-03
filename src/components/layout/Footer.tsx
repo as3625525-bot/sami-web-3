@@ -233,7 +233,9 @@ export function Footer() {
                                                     href={social.platform === 'Twitter' ? undefined : social.url}
                                                     onClick={social.platform === 'Twitter' ? (e) => {
                                                         e.preventDefault();
-                                                        window.dispatchEvent(new CustomEvent('portfolio:toggle-chatbot'));
+                                                        window.dispatchEvent(new CustomEvent('portfolio:toggle-chatbot', { 
+                                                            detail: { x: window.innerWidth / 2, y: window.innerHeight / 2 } 
+                                                        }));
                                                     } : undefined}
                                                     target="_blank"
                                                     rel="noopener noreferrer"
