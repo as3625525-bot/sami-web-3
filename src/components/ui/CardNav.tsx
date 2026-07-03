@@ -1,18 +1,15 @@
 'use client';
 
 import React, { useState, useRef, useEffect, useMemo } from 'react';
-import { motion, AnimatePresence, useMotionValue, useSpring, useTransform, MotionValue } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
-import { ChevronDown, Trophy, Navigation, Briefcase, Rocket, BookOpen, Sparkles } from 'lucide-react';
+import { ChevronDown, Trophy, Navigation, Briefcase, Rocket, BookOpen, ImageIcon, FileText, MessageCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface NavLink {
     label: string;
     href: string;
     description?: string;
-    tagline?: string;
-    color?: string;
-    iconColor?: string;
 }
 
 interface NavItem {
@@ -26,90 +23,187 @@ interface CardNavProps {
     pathname?: string;
 }
 
-// Logic for Fisheye Icon
-function DockIcon({
-    link,
-    mouseX,
-    index,
-    iconMap,
-    setIsExpanded,
-    theme
-}: {
-    link: NavLink,
-    mouseX: MotionValue,
-    index: number,
-    iconMap: Record<string, any>,
-    setIsExpanded: (v: boolean) => void,
-    theme: 'light' | 'dark'
-}) {
-    const ref = useRef<HTMLDivElement>(null);
-    const Icon = iconMap[link.href] || Sparkles;
+function GridSnake({ theme }: { theme: string }) {
+    const [pathX, setPathX] = useState<number[]>([]);
+    const [pathY, setPathY] = useState<number[]>([]);
+    
+    useEffect(() => {
+        const cols = 11; // ~264px max width
+        const rows = 6;  // ~144px max height
+        const gridSize = 24;
+        
+        let x = Math.floor(Math.random() * cols) * gridSize;
+        let y = Math.floor(Math.random() * rows) * gridSize;
+        
+        const px = [x];
+        const py = [y];
+        
+        for (let i = 0; i < 40; i++) {
+            const isHorizontal = Math.random() > 0.5;
+            const step = (Math.random() > 0.5 ? 1 : -1) * gridSize;
+            
+            if (isHorizontal) {
+                x += step;
+                if (x < 0) x = (cols - 1) * gridSize;
+                else if (x >= cols * gridSize) x = 0;
+            } else {
+                y += step;
+                if (y < 0) y = (rows - 1) * gridSize;
+                else if (y >= rows * gridSize) y = 0;
+            }
+            
+            px.push(x);
+            py.push(y);
+        }
+        setPathX(px);
+        setPathY(py);
+    }, []);
 
-    // Calculate distance between mouse and icon center
-    const distance = useTransform(mouseX, (val) => {
-        const bounds = ref.current?.getBoundingClientRect() ?? { x: 0, width: 0 };
-        return val - bounds.x - bounds.width / 2;
-    });
-
-    // Interpolate scale based on distance (Fisheye effect)
-    // Scale from 1 to 1.8 within 150px range
-    const widthTransform = useTransform(distance, [-150, 0, 150], [60, 100, 60]);
-    const width = useSpring(widthTransform, { stiffness: 350, damping: 25, mass: 0.1 });
-
-    const [isHovered, setIsHovered] = useState(false);
+    if (pathX.length === 0) return null;
 
     return (
-        <Link
-            href={link.href}
-            onClick={() => setIsExpanded(false)}
-            onMouseEnter={() => setIsHovered(true)}
-            onMouseLeave={() => setIsHovered(false)}
-            className="flex flex-col items-center justify-end h-full group relative px-2"
-        >
-            {/* Tooltip Label */}
-            <AnimatePresence>
-                {isHovered && (
-                    <motion.div
-                        initial={{ opacity: 0, y: 10, scale: 0.8 }}
-                        animate={{ opacity: 1, y: -10, scale: 1 }}
-                        exit={{ opacity: 0, y: 5, scale: 0.8 }}
-                        className="absolute -top-12 px-3 py-1.5 rounded-lg bg-foreground text-background text-[10px] font-black uppercase tracking-widest whitespace-nowrap z-50 pointer-events-none"
-                    >
-                        {link.label}
-                        <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-2 h-2 rotate-45 bg-foreground" />
-                    </motion.div>
-                )}
-            </AnimatePresence>
-
-            {/* Magnified Icon Container */}
-            <motion.div
-                ref={ref}
-                style={{ width }}
-                className={cn(
-                    "relative aspect-square rounded-2xl flex items-center justify-center transition-colors overflow-hidden border",
-                    theme === 'dark'
-                        ? "bg-white/5 border-white/10 group-hover:bg-white/10 group-hover:border-white/20"
-                        : "bg-black/5 border-black/10 group-hover:bg-black/10 group-hover:border-black/20"
-                )}
-            >
-                {/* Background Glow */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none opacity-30 group-hover:opacity-100 transition-opacity duration-700">
+            {[...Array(4)].map((_, i) => (
                 <motion.div
-                    animate={{ opacity: isHovered ? 0.3 : 0 }}
+                    key={i}
                     className={cn(
-                        "absolute inset-0 blur-xl bg-gradient-to-br",
-                        link.color || "from-primary/50 to-transparent"
+                        "absolute top-0 left-0 w-[24px] h-[24px]",
+                        theme === 'dark' ? (i === 0 ? "bg-white/20" : "bg-white/10") : (i === 0 ? "bg-black/20" : "bg-black/10")
                     )}
+                    animate={{
+                        x: pathX,
+                        y: pathY,
+                    }}
+                    transition={{
+                        duration: 15,
+                        repeat: Infinity,
+                        ease: "linear",
+                        delay: i * 0.15
+                    }}
                 />
+            ))}
+        </div>
+    )
+}
 
-                <Icon className={cn(
-                    "w-[40%] h-[40%] transition-transform duration-300",
-                    isHovered
-                        ? "scale-110 " + (link.iconColor || "text-primary")
-                        : (theme === 'dark' ? "text-white/40" : "text-black/30")
-                )} />
-            </motion.div>
-        </Link>
+function ActiveDot({ theme }: { theme: string }) {
+    return (
+        <span className="inline-flex ml-2 -translate-y-px align-middle">
+            <span className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 bg-[#D1FF4D]"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-[#D1FF4D] shadow-[0_0_5px_rgba(209,255,77,0.8)]"></span>
+            </span>
+        </span>
     );
+}
+
+function MegaBoxBig({ href, icon: Icon, title, desc, theme, pathname }: any) {
+    const isActive = pathname === href || pathname?.startsWith(`${href}/`);
+    
+    return (
+        <Link href={href} className={cn(
+            "group relative flex flex-col justify-between rounded-2xl border p-5 transition-all duration-500 hover:scale-[1.02] hover:-translate-y-1 h-40 overflow-hidden",
+            theme === 'dark'
+                ? cn("bg-[#161616] hover:bg-[#1f1f1f] hover:shadow-xl hover:shadow-black/50", isActive ? "border-[#D1FF4D]/50 shadow-[0_0_15px_rgba(209,255,77,0.05)]" : "border-white/10 hover:border-white/20")
+                : cn("hover:bg-white hover:shadow-xl hover:shadow-black/10", isActive ? "bg-white border-[#D1FF4D]/80 shadow-md shadow-[#D1FF4D]/10" : "bg-black/[0.02] border-black/10 hover:border-black/20")
+        )}>
+            {/* Subtle Grid Background */}
+            <div className="absolute inset-0 opacity-[0.04] pointer-events-none" style={{ backgroundImage: 'linear-gradient(to right, currentColor 1px, transparent 1px), linear-gradient(to bottom, currentColor 1px, transparent 1px)', backgroundSize: '24px 24px' }} />
+            
+            {/* Random Snake Animation */}
+            <GridSnake theme={theme} />
+
+            <Icon className={cn("w-6 h-6 relative z-10 transition-transform duration-500 group-hover:scale-110 group-hover:-rotate-3", theme === 'dark' ? (isActive ? "text-[#D1FF4D]" : "text-white/70 group-hover:text-white") : (isActive ? "text-[#8cb815]" : "text-black/70 group-hover:text-black"))} />
+
+            <div className="relative z-10 mt-auto">
+                <h4 className={cn("font-bold text-[15px] mb-1.5 transition-colors duration-300 flex items-center", theme === 'dark' ? (isActive ? "text-[#D1FF4D]" : "text-white") : (isActive ? "text-[#8cb815]" : "text-black"))}>
+                    {title}
+                    {isActive && <ActiveDot theme={theme} />}
+                </h4>
+                <p className={cn("text-xs font-medium leading-relaxed transition-colors duration-300", theme === 'dark' ? "text-white/60 group-hover:text-white/80" : "text-black/60 group-hover:text-black/80")}>{desc}</p>
+            </div>
+            
+            {/* Soft Glow overlay on hover */}
+            <div className={cn(
+                "absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none",
+                theme === 'dark' ? "bg-gradient-to-tr from-transparent via-white/5 to-transparent" : "bg-gradient-to-tr from-transparent via-black/5 to-transparent"
+            )} />
+        </Link>
+    )
+}
+
+function MegaBoxSmall({ href, icon: Icon, title, desc, theme, pathname }: any) {
+    const isActive = pathname === href || pathname?.startsWith(`${href}/`);
+    
+    return (
+        <Link href={href} className={cn(
+            "group relative flex flex-col justify-center rounded-2xl border p-4 transition-all duration-500 hover:scale-[1.02] hover:-translate-y-1 overflow-hidden",
+            theme === 'dark'
+                ? cn("bg-[#161616] hover:bg-[#1f1f1f] hover:shadow-xl hover:shadow-black/50", isActive ? "border-[#D1FF4D]/50 shadow-[0_0_15px_rgba(209,255,77,0.05)]" : "border-white/10 hover:border-white/20")
+                : cn("hover:bg-white hover:shadow-xl hover:shadow-black/10", isActive ? "bg-white border-[#D1FF4D]/80 shadow-md shadow-[#D1FF4D]/10" : "bg-black/[0.02] border-black/10 hover:border-black/20")
+        )}>
+            <div className="flex items-start justify-between relative z-10">
+                <div>
+                    <h4 className={cn("font-bold text-sm mb-1.5 transition-colors duration-300 flex items-center", theme === 'dark' ? (isActive ? "text-[#D1FF4D]" : "text-white") : (isActive ? "text-[#8cb815]" : "text-black"))}>
+                        {title}
+                        {isActive && <ActiveDot theme={theme} />}
+                    </h4>
+                    <p className={cn("text-[11px] font-medium leading-relaxed transition-colors duration-300", theme === 'dark' ? "text-white/60 group-hover:text-white/80" : "text-black/60 group-hover:text-black/80")}>{desc}</p>
+                </div>
+                <div className={cn("p-1.5 rounded-xl transition-colors duration-300", theme === 'dark' ? "group-hover:bg-white/10" : "group-hover:bg-black/5")}>
+                    <Icon className={cn("w-4 h-4 mt-0.5 flex-shrink-0 transition-transform duration-500 group-hover:scale-125 group-hover:rotate-12", theme === 'dark' ? (isActive ? "text-[#D1FF4D]" : "text-white/40 group-hover:text-white/80") : (isActive ? "text-[#8cb815]" : "text-black/40 group-hover:text-black/80"))} />
+                </div>
+            </div>
+        </Link>
+    )
+}
+
+function SidebarLink({ href, icon: Icon, title, desc, theme, pathname }: any) {
+    const isChat = href === '#';
+    const isActive = pathname === href || (href !== '#' && pathname?.startsWith(`${href}/`));
+    
+    const className = cn(
+        "group flex items-center gap-4 rounded-2xl border p-4 transition-all duration-500 overflow-hidden relative",
+        theme === 'dark'
+            ? cn("bg-[#161616] hover:bg-[#1f1f1f]", isActive ? "border-[#D1FF4D]/50 shadow-[0_0_15px_rgba(209,255,77,0.05)]" : "border-white/10 hover:border-white/20")
+            : cn("hover:bg-white", isActive ? "bg-white border-[#D1FF4D]/80 shadow-sm shadow-[#D1FF4D]/10" : "bg-black/[0.02] border-black/10 hover:border-black/20"),
+        isChat ? "cursor-not-allowed opacity-70" : "cursor-pointer hover:scale-[1.02] hover:-translate-x-1 hover:shadow-xl"
+    );
+
+    const content = (
+        <>
+            <div className="flex-1 relative z-10">
+                <h4 className={cn("font-bold text-sm mb-1.5 transition-colors duration-300 flex items-center", theme === 'dark' ? (isActive ? "text-[#D1FF4D]" : "text-white") : (isActive ? "text-[#8cb815]" : "text-black"))}>
+                    {title}
+                    {isActive && <ActiveDot theme={theme} />}
+                </h4>
+                <p className={cn("text-[11px] font-medium transition-colors duration-300", theme === 'dark' ? "text-white/60 group-hover:text-white/80" : "text-black/60 group-hover:text-black/80")}>{desc}</p>
+            </div>
+            <Icon className={cn("w-5 h-5 relative z-10 transition-transform duration-500 group-hover:scale-125 group-hover:-rotate-6", theme === 'dark' ? (isActive ? "text-[#D1FF4D]" : "text-white/40 group-hover:text-white/80") : (isActive ? "text-[#8cb815]" : "text-black/40 group-hover:text-black/80"))} />
+            
+            {/* Subtle highlight */}
+            {!isChat && (
+                <div className={cn(
+                    "absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none",
+                    theme === 'dark' ? "bg-gradient-to-r from-transparent to-white/[0.02]" : "bg-gradient-to-r from-transparent to-black/[0.02]"
+                )} />
+            )}
+        </>
+    );
+
+    if (isChat) {
+        return (
+            <div className={className}>
+                {content}
+            </div>
+        );
+    }
+
+    return (
+        <Link href={href} className={className}>
+            {content}
+        </Link>
+    )
 }
 
 export default function CardNav({
@@ -119,7 +213,6 @@ export default function CardNav({
 }: CardNavProps) {
     const [isExpanded, setIsExpanded] = useState(false);
     const containerRef = useRef<HTMLDivElement>(null);
-    const mouseX = useMotionValue(Infinity);
 
     // Close on click outside
     useEffect(() => {
@@ -137,14 +230,6 @@ export default function CardNav({
     const isActive = useMemo(() => {
         return aboutItem.links.some(link => pathname === link.href || pathname.startsWith(`${link.href}/`));
     }, [pathname, aboutItem.links]);
-
-    const iconMap: Record<string, any> = {
-        "/achievements": Trophy,
-        "/skills": Navigation,
-        "/experience": Briefcase,
-        "/projects": Rocket,
-        "/blog": BookOpen
-    };
 
     return (
         <div ref={containerRef} className="relative">
@@ -166,7 +251,7 @@ export default function CardNav({
                             animate={{ scale: 1 }}
                             className="flex items-center justify-center"
                         >
-                            <motion.span 
+                            <motion.span
                                 animate={{ opacity: [1, 0.4, 1], scale: [1, 1.3, 1] }}
                                 transition={{ repeat: Infinity, duration: 2, ease: "easeInOut" }}
                                 className="w-1.5 h-1.5 rounded-full bg-[#D1FF4D] shadow-[0_0_8px_rgba(209,255,77,0.6)]"
@@ -184,43 +269,48 @@ export default function CardNav({
                 </motion.div>
             </motion.button>
 
-            {/* Elastic Glass Ribbon (Dock Style) */}
+            {/* Mega Menu Dropdown */}
             <AnimatePresence>
                 {isExpanded && (
                     <motion.div
-                        onMouseMove={(e) => mouseX.set(e.clientX)}
-                        onMouseLeave={() => {
-                            mouseX.set(Infinity);
-                            setIsExpanded(false);
-                        }}
-                        initial={{ opacity: 0, y: -20, scale: 0.95, x: "-50%" }}
-                        animate={{ opacity: 1, y: 15, scale: 1, x: "-50%" }}
-                        exit={{ opacity: 0, y: -10, scale: 0.95, x: "-50%" }}
-                        transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
-                        className="absolute top-full left-1/2 mt-2 z-[100] pointer-events-auto"
+                        onMouseLeave={() => setIsExpanded(false)}
+                        initial={{ opacity: 0, y: 10, scale: 0.98, x: "-50%" }}
+                        animate={{ opacity: 1, y: 20, scale: 1, x: "-50%" }}
+                        exit={{ opacity: 0, y: 10, scale: 0.98, x: "-50%" }}
+                        transition={{ duration: 0.25, ease: "easeOut" }}
+                        className="absolute top-full left-1/2 z-[100] pointer-events-auto"
                     >
-                        <motion.div
-                            className={cn(
-                                "relative px-4 py-3 rounded-[2.5rem] border shadow-2xl flex items-end gap-1 backdrop-blur-3xl transition-all duration-500 min-h-[100px]",
-                                theme === 'dark'
-                                    ? "bg-[#0a0a0a]/60 border-white/10 shadow-black/80"
-                                    : "bg-white/80 border-black/10 shadow-black/5"
-                            )}
-                        >
-                            {/* Visual Noise/Grain effect could go here */}
+                        <div className={cn(
+                            "relative w-[850px] rounded-[1.5rem] border shadow-2xl flex backdrop-blur-2xl transition-all overflow-hidden",
+                            theme === 'dark'
+                                ? "bg-[#0a0a0a]/95 border-white/10 shadow-black/80"
+                                : "bg-white/95 border-black/10 shadow-black/5"
+                        )}>
+                            {/* Left Main Area */}
+                            <div className="flex-1 p-5 flex flex-col gap-4">
+                                {/* Top 2 big boxes */}
+                                <div className="grid grid-cols-2 gap-4">
+                                    <MegaBoxBig href="/projects" icon={Rocket} title="Project" desc="Discover my latest builds" theme={theme} pathname={pathname} />
+                                    <MegaBoxBig href="/experience" icon={Briefcase} title="Experience" desc="My professional journey" theme={theme} pathname={pathname} />
+                                </div>
+                                {/* Bottom 3 small boxes */}
+                                <div className="grid grid-cols-3 gap-4">
+                                    <MegaBoxSmall href="/skills" icon={Navigation} title="Skill" desc="Technical expertise" theme={theme} pathname={pathname} />
+                                    <MegaBoxSmall href="/achievements" icon={Trophy} title="Achievement" desc="Milestones reached" theme={theme} pathname={pathname} />
+                                    <MegaBoxSmall href="/blog" icon={BookOpen} title="Blog" desc="Insights and docs" theme={theme} pathname={pathname} />
+                                </div>
+                            </div>
 
-                            {aboutItem.links.map((link, idx) => (
-                                <DockIcon
-                                    key={link.href}
-                                    link={link}
-                                    mouseX={mouseX}
-                                    index={idx}
-                                    iconMap={iconMap}
-                                    setIsExpanded={setIsExpanded}
-                                    theme={theme}
-                                />
-                            ))}
-                        </motion.div>
+                            {/* Right Sidebar */}
+                            <div className={cn(
+                                "w-[280px] p-4 flex flex-col justify-center gap-4 border-l",
+                                theme === 'dark' ? "border-white/5" : "border-black/5"
+                            )}>
+                                <SidebarLink href="/gallery" icon={ImageIcon} title="Gallery" desc="Visual portfolio & moments" theme={theme} pathname={pathname} />
+                                <SidebarLink href="/resume" icon={FileText} title="Resume" desc="View or download my CV" theme={theme} pathname={pathname} />
+                                <SidebarLink href="#" icon={MessageCircle} title="Chat" desc="Coming soon to connect" theme={theme} pathname={pathname} />
+                            </div>
+                        </div>
                     </motion.div>
                 )}
             </AnimatePresence>

@@ -86,27 +86,25 @@ export const IdentitySequence = ({ scrollYProgress, isVisible }: IdentitySequenc
                 {/* Center Unified Action - Magnetic Group */}
                 <div className="mb-16 pointer-events-auto">
                     <MagneticEffect>
-                        <div className="group flex items-center gap-1 cursor-pointer">
-                            <div className="relative px-10 py-5 rounded-full bg-[#D1FF4D] overflow-hidden transition-all duration-500">
-                                <div className="absolute inset-0 bg-black dark:bg-white -translate-x-[101%] group-hover:translate-x-0 transition-transform duration-500 ease-out" />
+                        <div className="group flex items-center gap-2 cursor-pointer">
+                            <div className="relative px-10 py-5 rounded-full bg-black dark:bg-white group-hover:bg-[#c1e44a] dark:group-hover:bg-[#c1e44a] overflow-hidden transition-all duration-500 shadow-lg group-hover:shadow-[0_0_30px_rgba(193,228,74,0.3)]">
                                 <div className="relative z-10 h-7 overflow-hidden">
                                     <div className="flex flex-col transition-transform duration-500 ease-out group-hover:-translate-y-1/2">
-                                        <span className="text-black group-hover:text-white dark:group-hover:text-black font-bold text-xl leading-7 transition-colors duration-500">
+                                        <span className="text-white dark:text-black group-hover:text-black font-bold text-xl leading-7 transition-colors duration-500">
                                             {t("leadIn.aboutMe")}
                                         </span>
-                                        <span className="text-black group-hover:text-white dark:group-hover:text-black font-bold text-xl leading-7 transition-colors duration-500">
+                                        <span className="text-black font-bold text-xl leading-7 transition-colors duration-500">
                                             {t("leadIn.aboutMe")}
                                         </span>
                                     </div>
                                 </div>
                             </div>
 
-                            <div className="relative w-16 h-16 rounded-full bg-[#D1FF4D] overflow-hidden flex items-center justify-center transition-all duration-500">
-                                <div className="absolute inset-0 bg-black dark:bg-white -translate-x-[101%] group-hover:translate-x-0 transition-transform duration-500 ease-out" />
+                            <div className="relative w-16 h-16 rounded-full bg-black dark:bg-white group-hover:bg-[#c1e44a] dark:group-hover:bg-[#c1e44a] overflow-hidden flex items-center justify-center transition-all duration-500 shadow-lg">
                                 <div className="relative z-10 h-8 overflow-hidden">
                                     <div className="flex flex-col transition-transform duration-500 ease-out group-hover:-translate-y-1/2">
-                                        <ArrowUpRight className="w-8 h-8 text-black group-hover:text-white dark:group-hover:text-black transition-colors duration-500" />
-                                        <ArrowUpRight className="w-8 h-8 text-black group-hover:text-white dark:group-hover:text-black transition-colors duration-500" />
+                                        <ArrowUpRight className="w-8 h-8 text-white dark:text-black group-hover:text-black transition-colors duration-500" />
+                                        <ArrowUpRight className="w-8 h-8 text-black transition-colors duration-500" />
                                     </div>
                                 </div>
                             </div>

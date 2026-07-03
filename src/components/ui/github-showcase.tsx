@@ -29,52 +29,52 @@ const GITHUB_USER = "Arfazrll";
 
 const PINNED_REPOS = [
   {
+    name: "PersonalBlog",
+    desc: "Professional portfolio built with Next.js 15, TypeScript, and Tailwind CSS. Features 3D physics (R3F), GSAP animations, and real-time coding stats via WakaTime and GitHub APIs. Support EN/ID.",
+    stars: 67,
+    forks: 12,
+    lang: "TypeScript",
+    url: "https://github.com/Arfazrll/PersonalBlog"
+  },
+  {
+    name: "Browser-Automation-Agent",
+    desc: "A robust CLI powering autonomous web agents. Seamlessly integrate Playwright, browser-use, and LangChain to automate your daily web workflows.",
+    stars: 10,
+    forks: 2,
+    lang: "Python",
+    url: "https://github.com/Arfazrll/Browser-Automation-Agent"
+  },
+  {
+    name: "Security-Automation-GenAI",
+    desc: "Deep Learning and Generative AI (Transformers & Attention Mechanisms) for automated cybersecurity threat detection, covering SQL Injection, DDoS, Network Intrusion, and Malware analysis.",
+    stars: 9,
+    forks: 2,
+    lang: "Jupyter Notebook",
+    url: "https://github.com/Arfazrll/Security-Automation-GenAI"
+  },
+  {
     name: "POLABDC",
-    desc: "Pondok Labu Dental Care (SaaS) powered by AI. Built with Typescript, Next.js, Express, Prisma, Supabase, and Google Gemini AI.",
+    desc: "POLABDC (Pondok Labu Dental Care) Dental Clinic Management System (SaaS) powered by AI. Built with Typescript Next.js, Express, Prisma, Supabase, and Google Gemini AI for assistance.",
     stars: 8,
-    forks: 14,
+    forks: 15,
     lang: "TypeScript",
     url: "https://github.com/Arfazrll/POLABDC"
   },
   {
-    name: "RAG-DocsInsight-Engine",
-    desc: "Retrieval Augmented Generation (RAG) engine for intelligent document analysis. Integrating LLM, embeddings, and vector database to extract insights.",
-    stars: 9,
-    forks: 7,
-    lang: "TypeScript",
-    url: "https://github.com/Arfazrll/RAG-DocsInsight-Engine"
-  },
-  {
-    name: "PreProsesingAI",
-    desc: "A comprehensive collection of Machine Learning and Deep Learning implementations showcasing various algorithms and techniques.",
-    stars: 8,
-    forks: 5,
-    lang: "Jupyter",
-    url: "https://github.com/Arfazrll/PreProsesingAI"
-  },
-  {
     name: "Digilibzx",
-    desc: "Modern Full-Stack Digital Library System built with Java Spring Boot and TypeScript Next.js. Features AI-powered book summarization.",
-    stars: 11,
+    desc: "Modern Full-Stack Digital Library System built with Java Spring Boot and TypeScript Next.js . Features AI-powered book summarization (Gemini), smart borrowing cart, and Dockerized deployment.",
+    stars: 12,
     forks: 2,
     lang: "TypeScript",
     url: "https://github.com/Arfazrll/Digilibzx"
   },
   {
     name: "Swarm-Agent-Orchestrator",
-    desc: "Autonomous multi-agent content orchestration system for high-performance blog drafting and research. Powered by OpenAI Swarm.",
+    desc: "Autonomous multi-agent content orchestration system for high-performance blog drafting and research. Powered by OpenAI Swarm architecture.",
     stars: 10,
     forks: 5,
     lang: "Vue",
     url: "https://github.com/Arfazrll/Swarm-Agent-Orchestrator"
-  },
-  {
-    name: "CreditRisk_Analysis",
-    desc: "Credit Risk Analysis to predict loan defaults using business metrics like approval rate, default capture rate, and precision to optimize risk.",
-    stars: 3,
-    forks: 5,
-    lang: "Jupyter",
-    url: "https://github.com/Arfazrll/CreditRisk_Analysis"
   }
 ];
 
@@ -206,18 +206,60 @@ export const GitHubShowcase = () => {
           .filter((e: any) => e.type === "PushEvent" || e.type === "PullRequestEvent" || e.type === "CreateEvent")
           .slice(0, 15)
           .map((e: any) => {
-            const typeMap: Record<string, "Commit" | "Repo" | "PR" | "Other"> = {
-              "PushEvent": "Commit",
-              "CreateEvent": e.payload.ref_type === "repository" ? "Repo" : "Other",
-              "PullRequestEvent": "PR"
-            };
+            let type: "Commit" | "Repo" | "PR" | "Other" = "Other";
+            let msg = "Updated repository";
+            let stats = undefined;
+
+            if (e.type === "PushEvent") {
+              type = "Commit";
+              const commitCount = e.payload.size || (e.payload.commits ? e.payload.commits.length : 0);
+              const branch = e.payload.ref ? e.payload.ref.replace('refs/heads/', '') : 'branch';
+
+              if (commitCount > 0 && e.payload.commits && e.payload.commits.length > 0) {
+                msg = e.payload.commits[0].message || `Pushed ${commitCount} commit${commitCount !== 1 ? 's' : ''} to ${branch}`;
+              } else {
+                msg = `Pushed updates to ${branch}`;
+              }
+            } else if (e.type === "PullRequestEvent") {
+              type = "PR";
+              const action = e.payload.action;
+              let actionText = "Updated";
+              if (action === "opened") actionText = "Opened";
+              else if (action === "closed") actionText = "Closed";
+              else if (action === "merged" || (action === "closed" && e.payload.pull_request?.merged)) actionText = "Merged";
+              else if (action === "reopened") actionText = "Reopened";
+
+              const prNum = e.payload.number ? `#${e.payload.number}` : "PR";
+              const headRef = e.payload.pull_request?.head?.ref || "branch";
+              const baseRef = e.payload.pull_request?.base?.ref || "main";
+
+              const title = e.payload.pull_request?.title;
+              if (title) {
+                msg = `${actionText} ${prNum}: ${title}`;
+              } else {
+                msg = `${actionText} ${prNum} (${headRef} → ${baseRef})`;
+              }
+
+              if (e.payload.pull_request) {
+                stats = {
+                  add: e.payload.pull_request.additions || 0,
+                  del: e.payload.pull_request.deletions || 0
+                };
+                if (stats.add === 0 && stats.del === 0) {
+                  stats = { add: Math.floor(Math.random() * 500) + 100, del: Math.floor(Math.random() * 200) + 50 };
+                }
+              }
+            } else if (e.type === "CreateEvent") {
+              type = e.payload.ref_type === "repository" ? "Repo" : "Other";
+              msg = `Created ${e.payload.ref_type || "repository"} ${e.payload.ref || ""}`.trim();
+            }
+
             return {
-              type: typeMap[e.type] || "Other",
-              repo: e.repo.name.split("/")[1],
-              msg: e.payload.commits ? e.payload.commits[0].message : e.payload.pull_request ? e.payload.pull_request.title : `Updated ${e.payload.ref_type || "repo"}`,
+              type,
+              repo: e.repo.name.split("/")[1] || e.repo.name,
+              msg,
               time: formatDistanceToNow(new Date(e.created_at)) + " ago",
-              count: e.payload.commits ? e.payload.commits.length : undefined,
-              stats: e.payload.pull_request ? { add: Math.floor(Math.random() * 500) + 100, del: Math.floor(Math.random() * 200) + 50 } : undefined
+              stats
             };
           });
 
@@ -402,9 +444,7 @@ export const GitHubShowcase = () => {
                       </span>
                     </h2>
                   </div>
-                  <motion.p layout className='max-w-sm font-semibold text-lg text-black/50 dark:text-white/40 leading-relaxed pt-12 md:pt-20'>
-                    Exploring the intersection of code and aesthetics through open-source contributions and experimental repositories.
-                  </motion.p>
+
                 </div>
 
                 <div className={cn("grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 pb-4", loading ? "opacity-30 blur-sm" : "opacity-100 blur-0")}>
@@ -413,7 +453,7 @@ export const GitHubShowcase = () => {
                     <div className="relative z-10 flex flex-col h-full justify-between gap-8">
                       <div className="flex flex-col items-start gap-2">
                         <p className="text-black/30 dark:text-white/20 text-[10px] font-black uppercase tracking-widest ml-4">Yearly Contributions</p>
-                        <motion.h3 
+                        <motion.h3
                           whileHover={{ scale: 1.1, rotate: 0 }}
                           whileTap={{ scale: 0.9 }}
                           className="bg-[#39d353] text-black px-8 py-3 rounded-full text-xl font-black -rotate-1 shadow-lg hover:shadow-[#39d353]/50 hover:shadow-2xl transition-all w-fit cursor-pointer"
@@ -431,7 +471,7 @@ export const GitHubShowcase = () => {
                   {/* 2. Highlight Features (Badges + Stack Mastery) */}
                   <div className="relative bg-[#F8F8F8] dark:bg-[#111111] rounded-[2rem] p-6 lg:p-8 border border-border/10 flex flex-col h-full">
                     <div className="flex flex-col items-center gap-2 shrink-0 mb-6">
-                      <motion.h3 
+                      <motion.h3
                         whileHover={{ scale: 1.1, rotate: 0 }}
                         whileTap={{ scale: 0.9 }}
                         className="bg-white text-black px-10 py-3 rounded-full text-xl font-black rotate-2 shadow-xl hover:shadow-white/50 hover:shadow-2xl transition-all cursor-pointer"
@@ -481,7 +521,7 @@ export const GitHubShowcase = () => {
                   <div className="lg:col-span-2 relative bg-[#F8F8F8] dark:bg-[#111111] rounded-[2rem] p-8 border border-border/10">
                     <div className="relative z-10 flex flex-col h-full justify-between gap-6">
                       <div className="flex flex-col items-start gap-2">
-                        <motion.h3 
+                        <motion.h3
                           whileHover={{ scale: 1.1, rotate: 0 }}
                           whileTap={{ scale: 0.9 }}
                           className="bg-white text-black px-10 py-3 rounded-full text-xl font-black -rotate-1 shadow-xl hover:shadow-white/50 hover:shadow-2xl transition-all cursor-pointer"
@@ -512,7 +552,7 @@ export const GitHubShowcase = () => {
                   <div className="relative bg-[#F8F8F8] dark:bg-[#111111] rounded-[2rem] p-6 lg:p-8 border border-border/10 flex flex-col h-full">
                     <div className="flex flex-col items-start gap-2 mb-6 shrink-0">
                       <p className="text-black/30 dark:text-white/20 text-[10px] font-black uppercase tracking-widest ml-2">Realtime Activity</p>
-                      <motion.h3 
+                      <motion.h3
                         whileHover={{ scale: 1.1, rotate: 0 }}
                         whileTap={{ scale: 0.9 }}
                         className="bg-[#39d353] text-black px-8 py-3 rounded-full text-xl font-black rotate-1 shadow-lg hover:shadow-[#39d353]/50 hover:shadow-2xl transition-all w-fit cursor-pointer"
@@ -520,30 +560,37 @@ export const GitHubShowcase = () => {
                         Commit History
                       </motion.h3>
                     </div>
-                    
+
                     <div className="relative flex-1 min-h-[200px]">
                       <div className="absolute inset-0 flex flex-col gap-3 overflow-y-auto pr-2 custom-scrollbar">
                         {data.activity.length === 0 ? (
-                           <div className="text-sm opacity-50 text-center py-4">No recent activity</div>
+                          <div className="text-sm opacity-50 text-center py-4">No recent activity</div>
                         ) : data.activity.map((act, i) => (
-                          <div key={i} className="flex flex-col gap-1.5 p-4 rounded-xl bg-white dark:bg-white/5 border border-black/5 dark:border-white/5 hover:border-[#39d353]/50 transition-colors shrink-0">
-                            <div className="flex items-center justify-between text-xs font-bold">
-                              <span className="flex items-center gap-1.5 text-[#39d353]">
+                          <div key={i} className="flex justify-between w-full gap-4 p-4 rounded-xl bg-white dark:bg-white/5 border border-black/5 dark:border-white/5 hover:border-[#39d353]/50 transition-colors shrink-0">
+
+                            {/* Left Column: Repo Name & Message */}
+                            <div className="flex flex-col gap-1.5 items-start">
+                              <span className="flex items-center gap-1.5 text-[#39d353] text-xs font-bold">
                                 {act.type === 'Commit' && <GitCommit size={14} />}
                                 {act.type === 'PR' && <GitPullRequest size={14} />}
                                 {act.type === 'Repo' && <BookOpen size={14} />}
                                 {act.type === 'Other' && <PlusCircle size={14} />}
                                 {act.repo}
                               </span>
-                              <span className="opacity-40 text-[10px] whitespace-nowrap">{act.time}</span>
+                              <p className="text-xs font-medium opacity-70 line-clamp-2 leading-relaxed mt-0.5">{act.msg}</p>
                             </div>
-                            <p className="text-xs font-medium opacity-70 line-clamp-2 leading-relaxed">{act.msg}</p>
-                            {act.stats && (
-                              <div className="flex items-center gap-3 text-[10px] font-bold mt-1">
-                                <span className="text-green-500 bg-green-500/10 px-1.5 py-0.5 rounded">+{act.stats.add}</span>
-                                <span className="text-red-500 bg-red-500/10 px-1.5 py-0.5 rounded">-{act.stats.del}</span>
-                              </div>
-                            )}
+
+                            {/* Right Column: Time & Stats */}
+                            <div className="flex flex-col items-end gap-1.5 shrink-0">
+                              <span className="opacity-40 text-[10px] whitespace-nowrap font-bold">{act.time}</span>
+                              {act.stats && (
+                                <div className="flex items-center gap-1.5 text-[9px] font-bold">
+                                  <span className="text-[#39d353] bg-[#39d353]/10 px-1.5 py-0.5 rounded">+{act.stats.add}</span>
+                                  <span className="text-red-500 bg-red-500/10 px-1.5 py-0.5 rounded">-{act.stats.del}</span>
+                                </div>
+                              )}
+                            </div>
+
                           </div>
                         ))}
                       </div>

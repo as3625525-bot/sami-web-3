@@ -1,8 +1,8 @@
 'use client';
 
-import React, { useState, useMemo, useEffect, useCallback } from 'react';
+import React, { useState, useMemo, useEffect, useCallback, useRef } from 'react';
 import { createPortal } from 'react-dom';
-import { motion, AnimatePresence, useMotionValue, useSpring, useMotionTemplate, motionValue, LayoutGroup } from 'framer-motion';
+import { motion, AnimatePresence, useMotionValue, useSpring, useMotionTemplate, motionValue, LayoutGroup, useInView } from 'framer-motion';
 import { useTranslations } from 'next-intl';
 import { Search, SortAsc, SortDesc, ExternalLink, X, Calendar, Building2, Trophy, Medal, Award, Target, ChevronRight, ChevronLeft, MousePointer2, Eye, Share2, PanelLeftClose, PanelLeftOpen, LayoutGrid, List } from 'lucide-react';
 import { cn, formatDate } from '@/lib/utils';
@@ -115,10 +115,13 @@ const AchievementCard = React.memo(React.forwardRef<HTMLDivElement, {
                     initial={{ opacity: 0, y: 30 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, scale: 0.95 }}
-                    transition={{ delay: index * 0.05, duration: 0.5, type: "spring", stiffness: 100 }}
+                    transition={{
+                        default: { delay: index * 0.05, duration: 0.5, type: "spring", stiffness: 100 },
+                        layout: { delay: 0, duration: 0.4, type: "tween", ease: [0.16, 1, 0.3, 1] }
+                    }}
                     whileHover={{ y: -4 }}
                     className={cn(
-                        "relative bg-card/90 dark:bg-card/40 rounded-2xl overflow-hidden border-2 border-zinc-400 dark:border-border/40 group-hover:border-foreground/20 transition-all duration-500 shadow-xl dark:shadow-none group-hover:shadow-2xl z-20 cursor-pointer transform-gpu",
+                        "relative bg-card/90 dark:bg-card/40 rounded-2xl overflow-hidden border border-black/10 dark:border-white/10 group-hover:border-black/20 dark:group-hover:border-white/20 transition-all duration-500 shadow-xl dark:shadow-none group-hover:shadow-2xl z-20 cursor-pointer transform-gpu",
                         viewMode === 'list' ? "flex flex-col sm:flex-row h-auto sm:h-48" : "flex flex-col",
                         !isLowPowerMode && "backdrop-blur-md"
                     )}
@@ -133,13 +136,13 @@ const AchievementCard = React.memo(React.forwardRef<HTMLDivElement, {
                     )}
 
                     {/* Integrated Header: Image + Gradient/Icon */}
-                    <div 
+                    <div
                         className={cn(
                             "relative w-full overflow-hidden transition-all duration-500 bg-gradient-to-br shrink-0 transform-gpu",
                             viewMode === 'list' ? "h-48 sm:h-full sm:w-64" : "h-44",
                             config.gradient
                         )}
-                        style={{ 
+                        style={{
                             clipPath: 'inset(0)',
                             WebkitMaskImage: 'linear-gradient(black, black)',
                             maskImage: 'linear-gradient(black, black)'
@@ -264,60 +267,78 @@ const NavItem = React.memo(({ label, active, onClick, count, isCollapsed }: { la
             whileHover={{ x: isCollapsed ? 0 : 6 }}
             whileTap={{ scale: 0.98 }}
             className={cn(
-                "group relative w-full text-left py-5 lg:py-6 px-6 lg:px-8 transition-all duration-300 outline-none",
+                "group relative w-full text-left transition-all duration-500 outline-none",
                 active ? "bg-foreground/[0.03]" : "hover:bg-foreground/[0.015]",
-                isCollapsed && "px-0 flex justify-center py-8"
+                isCollapsed ? "py-8 px-0" : "py-5 lg:py-6 px-6 lg:px-8"
             )}
         >
-            <div className={cn("flex items-center justify-between relative z-10 w-full", isCollapsed && "justify-center")}>
+            <div className={cn("flex items-center relative z-10 w-full", isCollapsed ? "justify-center" : "justify-between")}>
                 <div className="flex items-center gap-3">
-                    <div className={cn(
-                        "w-2 h-2 rounded-full transition-all duration-300 relative",
-                        active
-                            ? "bg-foreground scale-125 shadow-[0_0_10px_rgba(0,0,0,0.1)] dark:shadow-[0_0_10px_rgba(255,255,255,0.2)]"
-                            : "bg-muted-foreground/30 group-hover:bg-muted-foreground/50"
-                    )} />
+                    <motion.div
+                        layout
+                        transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+                        className={cn(
+                            "w-2 h-2 rounded-full transition-colors duration-300 relative shrink-0",
+                            active
+                                ? "bg-foreground scale-125 shadow-[0_0_10px_rgba(0,0,0,0.1)] dark:shadow-[0_0_10px_rgba(255,255,255,0.2)]"
+                                : "bg-muted-foreground/30 group-hover:bg-muted-foreground/50"
+                        )}
+                    />
 
-                    {!isCollapsed && (
-                        <span className={cn(
-                            "text-2xl sm:text-3xl lg:text-4xl font-black tracking-tight transition-all duration-300 whitespace-nowrap",
-                            active ? "text-foreground" : "text-muted-foreground/60 group-hover:text-muted-foreground/80 dark:text-muted-foreground/40 dark:group-hover:text-muted-foreground/60"
-                        )}>
-                            {label}
-                        </span>
-                    )}
+                    <AnimatePresence initial={false}>
+                        {!isCollapsed && (
+                            <motion.span
+                                initial={{ opacity: 0, width: 0 }}
+                                animate={{ opacity: 1, width: 'auto' }}
+                                exit={{ opacity: 0, width: 0 }}
+                                transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+                                className={cn(
+                                    "text-2xl sm:text-3xl lg:text-4xl font-black tracking-tight whitespace-nowrap overflow-hidden block",
+                                    active ? "text-foreground" : "text-muted-foreground/60 group-hover:text-muted-foreground/80 dark:text-muted-foreground/40 dark:group-hover:text-muted-foreground/60"
+                                )}
+                            >
+                                {label}
+                            </motion.span>
+                        )}
+                    </AnimatePresence>
                 </div>
 
                 {/* Hover Preview for Collapsed Sidebar */}
-                {isCollapsed && (
-                    <AnimatePresence>
-                        {isHovered && (
-                            <motion.div
-                                initial={{ opacity: 0, x: 10, scale: 0.95 }}
-                                animate={{ opacity: 1, x: 0, scale: 1 }}
-                                exit={{ opacity: 0, x: 5, scale: 0.95 }}
-                                transition={{ type: "spring", stiffness: 400, damping: 25 }}
-                                className="absolute left-[70%] ml-4 px-4 py-2 bg-foreground text-background text-[10px] font-black uppercase tracking-[0.2em] rounded-lg shadow-2xl z-[100] whitespace-nowrap pointer-events-none"
-                            >
-                                <div className="flex items-center gap-2">
-                                    {label}
-                                    <span className="opacity-40 text-[8px]">{count.toString().padStart(2, '0')}</span>
-                                </div>
-                                {/* Arrow Tip */}
-                                <div className="absolute left-[-4px] top-1/2 -translate-y-1/2 w-2 h-2 bg-foreground rotate-45" />
-                            </motion.div>
-                        )}
-                    </AnimatePresence>
-                )}
+                <AnimatePresence>
+                    {isCollapsed && isHovered && (
+                        <motion.div
+                            initial={{ opacity: 0, x: 10, scale: 0.95 }}
+                            animate={{ opacity: 1, x: 0, scale: 1 }}
+                            exit={{ opacity: 0, x: 5, scale: 0.95 }}
+                            transition={{ type: "spring", stiffness: 400, damping: 25 }}
+                            className="absolute left-[70%] ml-4 px-4 py-2 bg-foreground text-background text-[10px] font-black uppercase tracking-[0.2em] rounded-lg shadow-2xl z-[100] whitespace-nowrap pointer-events-none"
+                        >
+                            <div className="flex items-center gap-2">
+                                {label}
+                                <span className="opacity-40 text-[8px]">{count.toString().padStart(2, '0')}</span>
+                            </div>
+                            {/* Arrow Tip */}
+                            <div className="absolute left-[-4px] top-1/2 -translate-y-1/2 w-2 h-2 bg-foreground rotate-45" />
+                        </motion.div>
+                    )}
+                </AnimatePresence>
 
-                {!isCollapsed && (
-                    <span className={cn(
-                        "text-xs font-bold tabular-nums transition-all duration-300",
-                        active ? "text-foreground/80" : "text-muted-foreground/15"
-                    )}>
-                        {count.toString().padStart(2, '0')}
-                    </span>
-                )}
+                <AnimatePresence initial={false}>
+                    {!isCollapsed && (
+                        <motion.span
+                            initial={{ opacity: 0, width: 0 }}
+                            animate={{ opacity: 1, width: 'auto' }}
+                            exit={{ opacity: 0, width: 0 }}
+                            transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+                            className={cn(
+                                "text-xs font-bold tabular-nums overflow-hidden block",
+                                active ? "text-foreground/80" : "text-muted-foreground/15"
+                            )}
+                        >
+                            {count.toString().padStart(2, '0')}
+                        </motion.span>
+                    )}
+                </AnimatePresence>
             </div>
 
             <AnimatePresence>
@@ -394,12 +415,12 @@ const AchievementModal = React.forwardRef<HTMLDivElement, {
                 <div className="flex items-center justify-between px-6 py-4 border-b border-border/50 bg-foreground/5">
                     {/* Traffic Lights */}
                     <div className="flex items-center gap-2">
-                        <button 
+                        <button
                             onClick={(e) => {
                                 e.stopPropagation();
                                 onClose();
                             }}
-                            className="w-3.5 h-3.5 rounded-full bg-[#FF5F56] hover:brightness-75 transition-all shadow-sm" 
+                            className="w-3.5 h-3.5 rounded-full bg-[#FF5F56] hover:brightness-75 transition-all shadow-sm"
                             title="Close"
                         />
                         <div className="w-3.5 h-3.5 rounded-full bg-[#FFBD2E] opacity-50 shadow-sm" />
@@ -440,10 +461,10 @@ const AchievementModal = React.forwardRef<HTMLDivElement, {
 
                 {/* --- TERMINAL BODY --- */}
                 <div className="flex flex-col lg:flex-row items-stretch p-6 md:p-8 lg:p-10 gap-10 overflow-auto no-scrollbar max-h-[85vh]">
-                    
+
                     {/* Left: Certificate Image Section */}
                     <div className="lg:w-[55%] flex flex-col gap-4">
-                        <motion.div 
+                        <motion.div
                             key={achievement.id + "-image"}
                             initial={{ opacity: 0, scale: 0.95 }}
                             animate={{ opacity: 1, scale: 1 }}
@@ -483,7 +504,7 @@ const AchievementModal = React.forwardRef<HTMLDivElement, {
                     <div className="lg:w-[45%] flex flex-col justify-between py-2">
                         <div className="space-y-8">
                             <div className="space-y-4">
-                                <motion.h2 
+                                <motion.h2
                                     key={achievement.id + "-title"}
                                     initial={{ opacity: 0, x: 20 }}
                                     animate={{ opacity: 1, x: 0 }}
@@ -499,7 +520,7 @@ const AchievementModal = React.forwardRef<HTMLDivElement, {
                                     </div>
 
                                     {achievement.credentialUrl && (
-                                        <a 
+                                        <a
                                             href={achievement.credentialUrl}
                                             target="_blank"
                                             rel="noopener noreferrer"
@@ -544,6 +565,115 @@ export default function AchievementsPage() {
 
     const lenis = useLenis();
 
+    const controlsRef = useRef<HTMLDivElement>(null);
+    const isControlsInView = useInView(controlsRef, { margin: "0px" });
+
+    const renderControls = (isSidebar: boolean = false) => {
+        const isCompact = isSidebar && isSidebarCollapsed;
+
+        return (
+            <div className={cn("flex items-center gap-2", isCompact ? "flex-col w-full" : "w-full sm:w-auto")}>
+                {/* Search */}
+                <div className={cn("relative group/search", isCompact ? "w-10 h-10" : "flex-1 sm:min-w-[200px]")}>
+                    {isCompact ? (
+                        <>
+                            {/* Collapsed Icon state */}
+                            <div className="absolute inset-0 bg-white dark:bg-secondary/20 border border-zinc-200 dark:border-border/40 rounded-xl flex items-center justify-center text-muted-foreground transition-opacity z-10 pointer-events-none group-focus-within/search:opacity-0 group-hover/search:opacity-0 shadow-sm">
+                                <Search className="w-4 h-4" />
+                            </div>
+
+                            {/* Expanding Input overlay */}
+                            <div className="absolute left-0 top-0 h-10 w-10 group-hover/search:w-[250px] group-focus-within/search:w-[250px] transition-all duration-300 ease-out z-50 overflow-hidden bg-white dark:bg-secondary/20 border border-zinc-200 dark:border-border/40 focus-within:border-foreground/30 rounded-xl shadow-lg">
+                                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground group-focus-within/search:text-foreground transition-colors" />
+                                <input
+                                    type="text"
+                                    placeholder="Search archive..."
+                                    value={searchQuery}
+                                    onChange={e => setSearchQuery(e.target.value)}
+                                    className="w-full h-full bg-transparent pl-9 pr-8 text-sm outline-none placeholder:text-muted-foreground/40"
+                                />
+                                {searchQuery && (
+                                    <button
+                                        onClick={() => setSearchQuery('')}
+                                        className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground bg-transparent"
+                                    >
+                                        <X className="w-3.5 h-3.5" />
+                                    </button>
+                                )}
+                            </div>
+                        </>
+                    ) : (
+                        <>
+                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground group-focus-within:text-foreground transition-colors" />
+                            <input
+                                type="text"
+                                placeholder="Search..."
+                                value={searchQuery}
+                                onChange={e => setSearchQuery(e.target.value)}
+                                className="w-full bg-white dark:bg-secondary/20 border border-zinc-200 dark:border-border/40 focus:border-foreground/30 rounded-xl pl-10 pr-8 py-2.5 text-sm outline-none transition-all placeholder:text-muted-foreground/40 shadow-sm focus:shadow-md"
+                            />
+                            {searchQuery && (
+                                <motion.button
+                                    initial={{ scale: 0 }}
+                                    animate={{ scale: 1 }}
+                                    onClick={() => setSearchQuery('')}
+                                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                                >
+                                    <X className="w-3.5 h-3.5" />
+                                </motion.button>
+                            )}
+                        </>
+                    )}
+                </div>
+
+                {/* Sort */}
+                <motion.button
+                    onClick={() => setSortOrder(prev => prev === 'newest' ? 'oldest' : 'newest')}
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    className={cn(
+                        "p-2.5 rounded-xl bg-white dark:bg-secondary/20 hover:bg-secondary/10 dark:hover:bg-secondary/40 border border-zinc-200 dark:border-border/40 text-muted-foreground hover:text-foreground transition-all shadow-sm hover:shadow-md",
+                        isCompact ? "w-10 h-10 flex justify-center items-center" : ""
+                    )}
+                    title="Sort order"
+                >
+                    {sortOrder === 'newest' ? <SortDesc className="w-4 h-4" /> : <SortAsc className="w-4 h-4" />}
+                </motion.button>
+
+                {/* View Mode */}
+                <div className={cn(
+                    "flex bg-white dark:bg-secondary/20 rounded-xl border border-zinc-200 dark:border-border/40 p-1 shadow-sm",
+                    isCompact ? "flex-col" : ""
+                )}>
+                    <motion.button
+                        onClick={() => setViewMode('grid')}
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                        className={cn(
+                            "p-1.5 rounded-lg transition-all",
+                            viewMode === 'grid' ? "bg-foreground/10 text-foreground" : "text-muted-foreground hover:text-foreground hover:bg-secondary/10 dark:hover:bg-secondary/40"
+                        )}
+                        title="Grid view"
+                    >
+                        <LayoutGrid className="w-4 h-4" />
+                    </motion.button>
+                    <motion.button
+                        onClick={() => setViewMode('list')}
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                        className={cn(
+                            "p-1.5 rounded-lg transition-all",
+                            viewMode === 'list' ? "bg-foreground/10 text-foreground" : "text-muted-foreground hover:text-foreground hover:bg-secondary/10 dark:hover:bg-secondary/40"
+                        )}
+                        title="List view"
+                    >
+                        <List className="w-4 h-4" />
+                    </motion.button>
+                </div>
+            </div>
+        );
+    };
+
     // Centralized Scroll Lock - Optimized to ONLY fire on Open/Close
     useEffect(() => {
         const body = document.body;
@@ -553,7 +683,7 @@ export default function AchievementsPage() {
             if (!isAlreadyLocked) {
                 const originalStyle = window.getComputedStyle(body).overflow;
                 const scrollBarWidth = window.innerWidth - document.documentElement.clientWidth;
-                
+
                 body.style.overflow = 'hidden';
                 body.style.paddingRight = `${scrollBarWidth}px`;
                 body.setAttribute('data-modal-open', 'true');
@@ -625,6 +755,16 @@ export default function AchievementsPage() {
     }, []);
 
     const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+    const [isGridExpanded, setIsGridExpanded] = useState(false);
+
+    useEffect(() => {
+        if (isSidebarCollapsed) {
+            const timer = setTimeout(() => setIsGridExpanded(true), 450); // Wait for sidebar to close before expanding grid
+            return () => clearTimeout(timer);
+        } else {
+            setIsGridExpanded(false); // Instantly collapse grid when opening sidebar
+        }
+    }, [isSidebarCollapsed]);
 
     const getCategoryCount = (cat: string) => {
         if (cat === 'all') return portfolioData.achievements.length;
@@ -633,15 +773,14 @@ export default function AchievementsPage() {
 
     return (
 
-        <div className="min-h-screen bg-background text-foreground overflow-y-auto overflow-x-hidden">
-            {/* Hero Scroll Section */}
+        <div className="min-h-screen bg-background text-foreground overflow-x-clip">
             {/* Hero Scroll Section */}
             <ErrorBoundary fallback={<div className="h-[60vh] flex items-center justify-center">Hero Unavailable</div>}>
                 <CertificateHeroScroll isLowPowerMode={isLowPowerMode} />
             </ErrorBoundary>
 
-            {/* Background */}
-            <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
+            {/* Ambient Background layer */}
+            <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
                 <motion.div
                     className={cn(
                         "absolute top-1/4 left-1/4 w-96 h-96 rounded-full bg-foreground/[0.02]",
@@ -663,7 +802,7 @@ export default function AchievementsPage() {
             </div>
 
             {/* CONTINUOUS CURTAIN LAYER: Covers the fixed hero */}
-            <div className="relative z-50 bg-background shadow-[0_-20px_40px_rgba(0,0,0,0.2)]">
+            <div className="relative z-50 bg-background">
 
                 {/* Main Two-Panel Layout */}
                 <div className="flex flex-col lg:flex-row relative items-start">
@@ -674,15 +813,16 @@ export default function AchievementsPage() {
                         animate={{
                             width: isSidebarCollapsed ? "80px" : "33.333333%",
                         }}
-                        transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                        transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
                         className={cn(
-                            "w-full h-auto lg:sticky lg:top-0 py-12 lg:py-36 flex flex-col z-40 bg-background/95 backdrop-blur-sm lg:bg-transparent lg:backdrop-blur-none border-r border-border/10",
+                            "w-full h-auto lg:h-screen lg:sticky lg:top-0 py-12 lg:py-36 flex flex-col z-40 bg-background/95 backdrop-blur-sm lg:bg-transparent lg:backdrop-blur-none border-r border-border/10",
                             isSidebarCollapsed && "items-center"
                         )}
+                        style={{ willChange: "width" }}
                     >
 
                         {/* Header & Toggle */}
-                        <div className={cn("px-6 lg:px-10 mb-10 w-full flex items-center justify-between", isSidebarCollapsed && "px-0 justify-center")}>
+                        <div className={cn("px-6 lg:px-10 mb-10 w-full flex items-center justify-between order-1 shrink-0", isSidebarCollapsed && "px-0 justify-center")}>
                             {!isSidebarCollapsed && (
                                 <motion.div
                                     initial={{ opacity: 0, x: -10 }}
@@ -713,7 +853,7 @@ export default function AchievementsPage() {
 
                         {/* Navigation */}
                         <motion.nav
-                            className="flex-1 w-full"
+                            className="flex-1 w-full order-3"
                             variants={staggerContainer}
                             initial="hidden"
                             animate="show"
@@ -732,20 +872,37 @@ export default function AchievementsPage() {
                             </motion.div>
                         </motion.nav>
 
+                        {/* Moved Controls (when scrolled out of view) */}
+                        <div className={cn("hidden lg:block w-full shrink-0", isSidebarCollapsed ? "order-4" : "order-2")}>
+                            <AnimatePresence>
+                                {!isControlsInView && (
+                                    <motion.div
+                                        initial={{ opacity: 0, y: -10 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        exit={{ opacity: 0, y: -10 }}
+                                        transition={{ duration: 0.3 }}
+                                        className={cn("w-full overflow-visible", isSidebarCollapsed ? "px-0 flex justify-center mb-8" : "px-6 lg:px-10 mb-8")}
+                                    >
+                                        {renderControls(true)}
+                                    </motion.div>
+                                )}
+                            </AnimatePresence>
+                        </div>
+
                         {/* Large counter */}
                         {!isSidebarCollapsed && (
                             <motion.div
                                 initial={{ opacity: 0 }}
                                 animate={{ opacity: 1 }}
                                 transition={{ delay: 0.6 }}
-                                className="p-6 lg:p-10 hidden lg:block"
+                                className="p-6 lg:p-10 hidden lg:block order-5 shrink-0 group cursor-default"
                             >
                                 <motion.div
-                                    className="text-[9rem] font-black leading-none text-foreground/[0.18] dark:text-foreground/20 select-none"
+                                    className="text-[9rem] font-black leading-none text-foreground/[0.18] dark:text-foreground/20 select-none transition-colors duration-500 group-hover:text-foreground/[0.35] dark:group-hover:text-foreground/40"
                                 >
                                     {stats.total.toString().padStart(2, '0')}
                                 </motion.div>
-                                <div className="text-[10px] font-bold text-muted-foreground/50 uppercase tracking-widest flex items-center gap-2 -mt-4">
+                                <div className="text-[10px] font-bold text-muted-foreground/50 uppercase tracking-widest flex items-center gap-2 -mt-4 transition-colors duration-500 group-hover:text-muted-foreground">
                                     <Award className="w-3 h-3" />
                                     Achievements
                                 </div>
@@ -758,6 +915,7 @@ export default function AchievementsPage() {
 
                         {/* Controls */}
                         <motion.div
+                            ref={controlsRef}
                             initial={{ opacity: 0, y: 20 }}
                             animate={{ opacity: 1, y: 0 }}
                             className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center justify-between mb-8 shrink-0 z-30 sticky top-20 lg:static"
@@ -780,71 +938,22 @@ export default function AchievementsPage() {
                                 ))}
                             </div>
 
-                            {/* Search */}
-                            <div className="flex items-center gap-2 w-full sm:w-auto">
-                                <div className="relative flex-1 sm:min-w-[200px] group">
-                                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground group-focus-within:text-foreground transition-colors" />
-                                    <input
-                                        type="text"
-                                        placeholder="Search..."
-                                        value={searchQuery}
-                                        onChange={e => setSearchQuery(e.target.value)}
-                                        className="w-full bg-white dark:bg-secondary/20 border-2 border-zinc-300 dark:border-border/40 focus:border-foreground/30 rounded-xl pl-10 pr-8 py-2.5 text-sm outline-none transition-all placeholder:text-muted-foreground/40 shadow-sm focus:shadow-md"
-                                    />
-                                    {searchQuery && (
-                                        <motion.button
-                                            initial={{ scale: 0 }}
-                                            animate={{ scale: 1 }}
-                                            onClick={() => setSearchQuery('')}
-                                            className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                                        >
-                                            <X className="w-3.5 h-3.5" />
-                                        </motion.button>
-                                    )}
-                                </div>
-                                <motion.button
-                                    onClick={() => setSortOrder(prev => prev === 'newest' ? 'oldest' : 'newest')}
-                                    whileHover={{ scale: 1.05 }}
-                                    whileTap={{ scale: 0.95 }}
-                                    className="p-2.5 rounded-xl bg-white dark:bg-secondary/20 hover:bg-secondary/10 dark:hover:bg-secondary/40 border-2 border-zinc-300 dark:border-border/40 text-muted-foreground hover:text-foreground transition-all shadow-sm group-hover:shadow-md"
-                                >
-                                    {sortOrder === 'newest' ? <SortDesc className="w-4 h-4" /> : <SortAsc className="w-4 h-4" />}
-                                </motion.button>
-                                <div className="flex bg-white dark:bg-secondary/20 rounded-xl border-2 border-zinc-300 dark:border-border/40 p-1 shadow-sm">
-                                    <motion.button
-                                        onClick={() => setViewMode('grid')}
-                                        whileHover={{ scale: 1.05 }}
-                                        whileTap={{ scale: 0.95 }}
-                                        className={cn(
-                                            "p-1.5 rounded-lg transition-all",
-                                            viewMode === 'grid' ? "bg-foreground/10 text-foreground" : "text-muted-foreground hover:text-foreground"
-                                        )}
-                                    >
-                                        <LayoutGrid className="w-4 h-4" />
-                                    </motion.button>
-                                    <motion.button
-                                        onClick={() => setViewMode('list')}
-                                        whileHover={{ scale: 1.05 }}
-                                        whileTap={{ scale: 0.95 }}
-                                        className={cn(
-                                            "p-1.5 rounded-lg transition-all",
-                                            viewMode === 'list' ? "bg-foreground/10 text-foreground" : "text-muted-foreground hover:text-foreground"
-                                        )}
-                                    >
-                                        <List className="w-4 h-4" />
-                                    </motion.button>
-                                </div>
+                            {/* Search & Filters */}
+                            <div className="hidden lg:block opacity-100 transition-opacity duration-300">
+                                {renderControls(false)}
+                            </div>
+                            <div className="block lg:hidden">
+                                {renderControls(false)}
                             </div>
                         </motion.div>
 
                         <LayoutGroup id="achievements-gallery">
                             <motion.div
-                                layout
                                 className={cn(
-                                    "grid gap-5 transition-all duration-500",
+                                    "grid gap-5",
                                     viewMode === 'list'
-                                        ? (isSidebarCollapsed ? "grid-cols-1 xl:grid-cols-2" : "grid-cols-1")
-                                        : isSidebarCollapsed
+                                        ? (isGridExpanded ? "grid-cols-1 xl:grid-cols-2" : "grid-cols-1")
+                                        : isGridExpanded
                                             ? "grid-cols-1 md:grid-cols-2 xl:grid-cols-4"
                                             : "grid-cols-1 md:grid-cols-2"
                                 )}
@@ -862,7 +971,7 @@ export default function AchievementsPage() {
                                             />
                                         ))
                                     ) : (
-                                        <motion.div 
+                                        <motion.div
                                             initial={{ opacity: 0, y: 20 }}
                                             animate={{ opacity: 1, y: 0 }}
                                             className="col-span-full py-20 flex flex-col items-center justify-center text-center space-y-4 rounded-3xl border-2 border-dashed border-border/20 bg-foreground/5 backdrop-blur-3xl"
@@ -874,7 +983,7 @@ export default function AchievementsPage() {
                                                 <h3 className="text-xl font-black text-foreground/80 tracking-tight">No Archive Entries Found</h3>
                                                 <p className="text-sm font-mono text-muted-foreground/40 uppercase tracking-widest">[ ERROR 404: RESOURCE_NOT_FOUND ]</p>
                                             </div>
-                                            <button 
+                                            <button
                                                 onClick={() => { setSearchQuery(''); setActiveCategory('all'); }}
                                                 className="px-6 py-2.5 rounded-xl bg-foreground text-background font-black text-[10px] uppercase tracking-widest hover:scale-105 transition-all active:scale-95"
                                             >
