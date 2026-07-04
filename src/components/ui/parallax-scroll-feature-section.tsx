@@ -153,22 +153,21 @@ export const ParallaxScrollFeatureSection = () => {
                             >
                                 <div
                                     className="relative w-full h-full group overflow-hidden bg-transparent"
-                                    style={{
-                                        maskImage: 'radial-gradient(circle at center, black 30%, transparent 100%)',
-                                        WebkitMaskImage: 'radial-gradient(circle at center, black 30%, transparent 100%)'
-                                    }}
                                 >
                                     <Image
                                         src={section.imageUrl}
                                         alt={section.title}
                                         fill
-                                        priority={true}
-                                        className="object-cover grayscale group-hover:grayscale-0 transition-all duration-1000"
+                                        priority={index === 0} // Only prioritize first image
+                                        className="object-cover grayscale group-hover:grayscale-0 transition-[filter] duration-1000"
                                         sizes="(max-width: 1024px) 100vw, 600px"
                                     />
+                                    {/* Replace expensive maskImage with radial gradient overlays */}
+                                    <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_30%,hsl(var(--background))_90%)] dark:bg-[radial-gradient(circle_at_center,transparent_30%,#000000_90%)] pointer-events-none" />
+                                    
                                     {/* Seamless blending gradients */}
-                                    <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-black pointer-events-none opacity-60" />
-                                    <div className="absolute inset-0 bg-gradient-to-r from-black via-transparent to-black pointer-events-none opacity-40" />
+                                    <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-background dark:from-black dark:to-black pointer-events-none opacity-80" />
+                                    <div className="absolute inset-0 bg-gradient-to-r from-background via-transparent to-background dark:from-black dark:to-black pointer-events-none opacity-60" />
                                 </div>
                             </motion.div>
                         </div>
