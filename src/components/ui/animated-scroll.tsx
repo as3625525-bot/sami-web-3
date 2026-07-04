@@ -56,9 +56,9 @@ export default function ScrollAdventure() {
     });
 
     const smoothProgress = useSpring(scrollYProgress, {
-        stiffness: 30,
+        stiffness: 100,
         damping: 30,
-        mass: 1,
+        mass: 0.1,
         restDelta: 0.001
     });
 
@@ -161,7 +161,7 @@ function PageSlide({ page, isActive, scrollProgress, index }: { page: any, isAct
 
                 {/* LEFT HALF OF THE SPLIT CARD */}
                 <motion.div
-                    style={{ y: leftY }}
+                    style={{ y: leftY, willChange: "transform" }}
                     className="relative w-1/2 h-full overflow-hidden bg-background dark:bg-black rounded-l-3xl md:rounded-l-[2rem] border border-r-0 border-border dark:border-white/10 z-10"
                 >
                     <div className="w-full h-full relative overflow-hidden">
@@ -183,7 +183,7 @@ function PageSlide({ page, isActive, scrollProgress, index }: { page: any, isAct
 
                 {/* RIGHT HALF OF THE SPLIT CARD */}
                 <motion.div
-                    style={{ y: rightY }}
+                    style={{ y: rightY, willChange: "transform" }}
                     className="relative w-1/2 h-full overflow-hidden bg-background dark:bg-black rounded-r-3xl md:rounded-r-[2rem] border border-l-0 border-border dark:border-white/10 z-10"
                 >
                     <div className="w-full h-full relative overflow-hidden">
@@ -248,10 +248,10 @@ function BlendedVisual({ src, side }: { src: string, side: 'left' | 'right' }) {
     return (
         <div className="relative w-full h-full overflow-hidden bg-background dark:bg-black">
             <motion.div
-                initial={{ scale: 1, filter: "grayscale(100%)" }}
-                whileHover={{ scale: 1.05, filter: "grayscale(0%)" }}
+                initial={{ scale: 1 }}
+                whileHover={{ scale: 1.05 }}
                 transition={{ duration: 1.2, ease: [0.16, 1, 0.3, 1] }}
-                className="absolute -inset-1 bg-cover bg-center bg-no-repeat will-change-transform"
+                className="absolute -inset-1 bg-cover bg-center bg-no-repeat will-change-transform grayscale hover:grayscale-0 transition-[filter] duration-1000"
                 style={{ backgroundImage: `url(${src})` }}
             />
             <div className={cn(
